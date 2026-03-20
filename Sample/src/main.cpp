@@ -62,28 +62,9 @@ int main(int argc, char** argv)
 	music.Play();
 
 	// music test do not mind
-		
 
-	// camera 
-	{
-		// a calera need a cameraComponent that can be orthographic or perspective and a transform
-
-		// create the camera with the fov , the size of the window (must be updated ) and the far and near rendering and the mode 
-		CameraComponent cam = CameraComponent::Create(glm::radians(45.0f),window->GetSize().x,window->GetSize().y,0.01f,100.0f,CameraComponent::Type::Perspective);
-		TransformComponent transform;
-		// create a transform and set pos and dir 
-		transform.SetPosition({ 0,3,5 });
-		transform.LookAt({ 0,0,0 });
-		// now create an entity , an alias here std::uint64_t
-		auto e = registry.CreateEntity();
-
-		// now move the component into the ecs
-		registry.AddComponents(e, std::move(cam), std::move(transform));
-	}
-
-	
 	// mesh
-	{
+	/*{
 		// a mesh need a meshComponent a transform and a texture 
 
 		// create a mesh and load it with the cash loader
@@ -106,7 +87,7 @@ int main(int argc, char** argv)
 		auto e = registry.CreateEntity();
 		// fill the component
 		registry.AddComponents(e, std::move(mesh), std::move(text), std::move(transform));
-	}
+	}*/
 
 	// light
 	{
@@ -147,40 +128,112 @@ int main(int argc, char** argv)
 
 	}
 
+	{
+		//mesh
+		MeshComponent playerMesh;
+		playerMesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+
+		TextureComponent playerTexture;
+		playerTexture.SetSize(playerMesh.mesh->GetSubMeshesCount());
+		for (int i = 0; i < playerMesh.mesh->GetSubMeshesCount(); ++i)
+			playerTexture.AddTexture(i, &TextureLoader::Load("Textures/viking_room.png", window->App()));
+
+		TransformComponent meshTransform;
+		meshTransform.SetPosition({ 0,0,0 });
+		meshTransform.SetScale({ 1.0f,1.0f,1.0f });
+
+		auto PlayerMesh = registry.CreateEntity();
+
+		registry.AddComponents(PlayerMesh, std::move(playerMesh), std::move(playerTexture), std::move(meshTransform));
+	}
+
+	// camera 
+	{
+		// a camera need a cameraComponent that can be orthographic or perspective and a transform
+
+		// create the camera with the fov , the size of the window (must be updated ) and the far and near rendering and the mode 
+		CameraComponent cam = CameraComponent::Create(glm::radians(45.0f), window->GetSize().x, window->GetSize().y, 0.01f, 100.0f, CameraComponent::Type::Perspective);
+		TransformComponent transform;
+		// create a transform and set pos and dir 
+		transform.SetPosition({ 0,3,0 }); //we need to be a FPS on the playerMesh Entity
+		transform.LookAt({ 0,0,0 });
+		// now create an entity , an alias here std::uint64_t
+		auto e = registry.CreateEntity();
+
+		// now move the component into the ecs
+		registry.AddComponents(e, std::move(cam), std::move(transform));
+	}
+
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+	bool isGrounded = true;
+	static float speed = 1.0f;
+	float verticalVelocity = 0.0f;
+	static float jumpcharge = 2;
+	bool isRunning = false;
+
+	auto player = registry.GetAllComponentsView<MeshComponent, TextureComponent, TransformComponent>().begin()[0];
+	auto& transform = registry.GetComponent<TransformComponent>(player);
+
+
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
 		float dt = actual - current;
 		current = actual;
-		
+		auto input = window->GetInputManager();
 
+		if (input->IsKeyDown(KGR::SpecialKey::Shift))
+			isRunning = true;
+
+
+		if (isRunning) speed = 5.0f;
+
+		if (input->IsKeyDown(KGR::Key::Q))
+			registry.GetComponent<TransformComponent>(player).Translate({ -speed * dt,0.0f,0.0f });
+		if (input->IsKeyDown(KGR::Key::D))
+			registry.GetComponent<TransformComponent>(player).Translate({ speed * dt, 0.0f,0.0f });
+
+		if (input->IsKeyDown(KGR::Key::Z))
+			registry.GetComponent<TransformComponent>(player).Translate({ 0.0f, -speed * dt, 0.0f });
+		if (input->IsKeyDown(KGR::Key::S))
+			registry.GetComponent<TransformComponent>(player).Translate({ 0.0f, speed * dt, 0.0f });
+
+		if (input->IsKeyPressed(KGR::SpecialKey::Ctrl))
 		{
-			auto es = registry.GetAllComponentsView<MeshComponent,TransformComponent>();
-			for (auto& e : es)
+			registry.GetComponent<TransformComponent>(player).SetScale({ 1.0f,1.0, 0.5f });
+		}
+		if (input->IsKeyReleased(KGR::SpecialKey::Ctrl))
+		{
+			registry.GetComponent<TransformComponent>(player).SetScale({ 1.0f,1.0f,1.0f });
+		}
+
+
+		if (input->IsKeyPressed(KGR::SpecialKey::Space))
+		{
+			if (jumpcharge != 0)
 			{
-				auto input = window->GetInputManager();
-
-				static float speed = 25.0f;
-				if (input->IsKeyDown(KGR::Key::Q))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Yaw>(glm::radians(speed * dt));
-				if (input->IsKeyDown(KGR::Key::D))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Yaw>(glm::radians(-speed * dt));
-
-				if (input->IsKeyDown(KGR::Key::Z))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(-speed * dt));
-				if (input->IsKeyDown(KGR::Key::S))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(speed * dt));
-
-
-
-				if (input->IsKeyDown(KGR::Key::A))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Roll>(glm::radians(-speed * dt));
-				if (input->IsKeyDown(KGR::Key::E))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Roll>(glm::radians(speed * dt));
+				verticalVelocity += 5.0f;
+				jumpcharge--;
 			}
+			isGrounded = false;
+		}
 
+		if (!isGrounded)
+		{
+			verticalVelocity -= 3.0f * dt;
+			transform.Translate({ 0.0f, 0.0f, verticalVelocity * dt });
+
+			if (transform.GetPosition().z <= 0.0f)
+			{
+				auto pos = transform.GetPosition();
+				pos.z = 0.0f;
+				transform.SetPosition(pos);
+
+				isGrounded = true;
+				verticalVelocity = 0.0f;
+				jumpcharge = 2;
+			}
 		}
 
 		KGR::RenderWindow::PollEvent();
@@ -195,9 +248,10 @@ int main(int argc, char** argv)
 				registry.GetComponent<CameraComponent>(e).UpdateCamera(registry.GetComponent<TransformComponent>(e).GetFullTransform());
 				registry.GetComponent<CameraComponent>(e).SetAspect(window->GetSize().x, window->GetSize().y);
 				window->RegisterCam(registry.GetComponent<CameraComponent>(e), registry.GetComponent<TransformComponent>(e));
+				//Camera must follow mesh movement
+				registry.GetComponent<TransformComponent>(e).SetPosition(registry.GetComponent<TransformComponent>(player).GetPosition() + glm::vec3{ 0,0,1 });
 			}
 		}
-
 
 		{
 			auto es = registry.GetAllComponentsView<MeshComponent, TransformComponent, TextureComponent>();
@@ -216,8 +270,6 @@ int main(int argc, char** argv)
 		//Test Sound
 		if(window->GetInputManager()->IsKeyPressed(KGR::Key::P))
 			sound.Play();
-
-		
 
 		{
 			auto es = registry.GetAllComponentsView<LightComponent<LightData::Type::Point>, TransformComponent>();
@@ -250,3 +302,4 @@ int main(int argc, char** argv)
 	window->Destroy();
 	KGR::RenderWindow::End();
 }
+
