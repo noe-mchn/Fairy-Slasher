@@ -63,31 +63,6 @@ int main(int argc, char** argv)
 
 	// music test do not mind
 
-	// mesh
-	/*{
-		// a mesh need a meshComponent a transform and a texture 
-
-		// create a mesh and load it with the cash loader
-		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/cube.obj",window->App());
-
-		// create a texture 
-		TextureComponent text;
-		// allocate the size of the texture must be the same as the number of submeshes 
-		text.SetSize(mesh.mesh->GetSubMeshesCount());
-		// then fill the texture ( this system need to be refact but for now you need to do it like that
-		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
-			text.AddTexture(i, &TextureLoader::Load("Textures/viking_room.png", window->App()));
-
-		// create the transform and set all the data
-		TransformComponent transform;
-		transform.SetPosition({ 0,0,0 });
-		transform.SetScale({ 2.0f,3.0f,4.0f });
-		// same create an entity / id
-		auto e = registry.CreateEntity();
-		// fill the component
-		registry.AddComponents(e, std::move(mesh), std::move(text), std::move(transform));
-	}*/
 
 	// light
 	{
@@ -155,7 +130,7 @@ int main(int argc, char** argv)
 		CameraComponent cam = CameraComponent::Create(glm::radians(45.0f), window->GetSize().x, window->GetSize().y, 0.01f, 100.0f, CameraComponent::Type::Perspective);
 		TransformComponent transform;
 		// create a transform and set pos and dir 
-		transform.SetPosition({ 0,3,0 }); //we need to be a FPS on the playerMesh Entity
+		transform.SetPosition({ 0,0,-1.5 });
 		transform.LookAt({ 0,0,0 });
 		// now create an entity , an alias here std::uint64_t
 		auto e = registry.CreateEntity();
@@ -248,8 +223,7 @@ int main(int argc, char** argv)
 				registry.GetComponent<CameraComponent>(e).UpdateCamera(registry.GetComponent<TransformComponent>(e).GetFullTransform());
 				registry.GetComponent<CameraComponent>(e).SetAspect(window->GetSize().x, window->GetSize().y);
 				window->RegisterCam(registry.GetComponent<CameraComponent>(e), registry.GetComponent<TransformComponent>(e));
-				//Camera must follow mesh movement
-				registry.GetComponent<TransformComponent>(e).SetPosition(registry.GetComponent<TransformComponent>(player).GetPosition() + glm::vec3{ 0,0,1 });
+				registry.GetComponent<TransformComponent>(e).SetPosition(registry.GetComponent<TransformComponent>(player).GetPosition() + glm::vec3{ 0,-1,0 });
 			}
 		}
 
