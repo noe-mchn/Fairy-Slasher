@@ -20,6 +20,7 @@
 #include "AI/CreatureData.h"
 #include "AI/CreatureAIComponent.h"
 #include "AI/AISystem.h"
+#include "../../GameLib/include/ClickCondition.h"
 
 // make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -280,6 +281,11 @@ int main(int argc, char** argv)
 
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+	TransformComponent transform;
+	CameraComponent cam;
+
+	auto click = ClickCondition();
+
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -289,6 +295,7 @@ int main(int argc, char** argv)
 		window->Update();
 		{
 			auto es = registry.GetAllComponentsView<MeshComponent,TransformComponent>();
+			auto camTransform = registry.GetComponent<TransformComponent>(registry.GetAllComponentsView<CameraComponent, TransformComponent>().begin()[0]);
 			for (auto& e : es)
 			{
 				auto input = window->GetInputManager();
@@ -303,6 +310,11 @@ int main(int argc, char** argv)
 					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(-speed * dt));
 				if (input->IsKeyDown(KGR::Key::S))
 					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(speed * dt));
+
+				if (input->IsMousePressed(KGR::Mouse::Left)) {
+					click.update(registry.GetComponent<TransformComponent>(e), camTransform);
+					printf("clicked\n");
+				}
 
 
 
