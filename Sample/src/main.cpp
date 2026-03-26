@@ -130,7 +130,7 @@ int main(int argc, char** argv)
 		CameraComponent cam = CameraComponent::Create(glm::radians(45.0f), window->GetSize().x, window->GetSize().y, 0.01f, 100.0f, CameraComponent::Type::Perspective);
 		TransformComponent transform;
 		// create a transform and set pos and dir 
-		transform.SetPosition({ 0,0,-1.5 });
+		transform.SetPosition({ 0,3,-1 });
 		transform.LookAt({ 0,0,0 });
 		// now create an entity , an alias here std::uint64_t
 		auto e = registry.CreateEntity();
@@ -141,15 +141,22 @@ int main(int argc, char** argv)
 
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+
 	bool isGrounded = true;
 	static float speed = 1.0f;
 	float verticalVelocity = 0.0f;
 	static float jumpcharge = 2;
-	bool isRunning = false;
+
+	static float mouseSensitivity = 0.0025f;
+	float yaw = 0.0f;
+	float pitch = glm::radians(-10.0f);
 
 	auto player = registry.GetAllComponentsView<MeshComponent, TextureComponent, TransformComponent>().begin()[0];
 	auto& transform = registry.GetComponent<TransformComponent>(player);
 
+	//get camera
+	auto mainCamera = registry.GetAllComponentsView<CameraComponent, TransformComponent>().begin()[0];
+	auto& transformCamera = registry.GetComponent<TransformComponent>(mainCamera);
 
 	while (!window->ShouldClose())
 	{
@@ -158,21 +165,57 @@ int main(int argc, char** argv)
 		current = actual;
 		auto input = window->GetInputManager();
 
-		if (input->IsKeyDown(KGR::SpecialKey::Shift))
-			isRunning = true;
+		auto mousemove = input->GetMouseDelta();
+		float mouseX = mousemove.x;
+		float mouseY = mousemove.y;
+
+		yaw += mouseX * mouseSensitivity;
+		pitch -= mouseY * mouseSensitivity;
+
+		pitch = std::clamp(pitch, glm::radians(-89.0f), glm::radians(89.0f));
+
+		transform.SetRotation({ 0.0f, yaw, 0.0f });
+		transformCamera.SetRotation({ pitch, yaw, 0.0f });
+
+		//this comment is to check camera rotation when there's no visual element
+		/*if (mouseX != 0.0f || mouseY != 0.0f)
+		{
+			std::cout << "CamRotX = " << transformCamera.GetRotation().x
+				<< " CamRotY = " << transformCamera.GetRotation().y
+				<< " CamRotZ = " << transformCamera.GetRotation().z << "\n";
+		}*/
 
 
-		if (isRunning) speed = 5.0f;
+		glm::vec3 forward = transform.GetLocalAxe<RotData::Dir::Forward>();
+		glm::vec3 right = transform.GetLocalAxe<RotData::Dir::Right>();
 
-		if (input->IsKeyDown(KGR::Key::Q))
-			registry.GetComponent<TransformComponent>(player).Translate({ -speed * dt,0.0f,0.0f });
-		if (input->IsKeyDown(KGR::Key::D))
-			registry.GetComponent<TransformComponent>(player).Translate({ speed * dt, 0.0f,0.0f });
+
+		forward.y = 0.0f;
+		right.y = 0.0f;
+
+		if (glm::length(forward) > 0.0f)
+			forward = glm::normalize(forward);
+		if (glm::length(right) > 0.0f)
+			right = glm::normalize(right);
+
+
+		speed = input->IsKeyDown(KGR::SpecialKey::Shift) ? 5.0f : 1.0f;
+
+		glm::vec3 moveDir{ 0.0f };
 
 		if (input->IsKeyDown(KGR::Key::Z))
-			registry.GetComponent<TransformComponent>(player).Translate({ 0.0f, -speed * dt, 0.0f });
+			moveDir += forward;
 		if (input->IsKeyDown(KGR::Key::S))
-			registry.GetComponent<TransformComponent>(player).Translate({ 0.0f, speed * dt, 0.0f });
+			moveDir -= forward;
+		if (input->IsKeyDown(KGR::Key::D))
+			moveDir += right;
+		if (input->IsKeyDown(KGR::Key::Q))
+			moveDir -= right;
+
+		if (glm::length(moveDir) > 0.0f)
+			moveDir = glm::normalize(moveDir);
+
+		transform.Translate(moveDir * speed * dt);
 
 		if (input->IsKeyPressed(KGR::SpecialKey::Ctrl))
 		{
@@ -197,12 +240,12 @@ int main(int argc, char** argv)
 		if (!isGrounded)
 		{
 			verticalVelocity -= 3.0f * dt;
-			transform.Translate({ 0.0f, 0.0f, verticalVelocity * dt });
+			transform.Translate({ 0.0f, verticalVelocity * dt, 0.0f });
 
-			if (transform.GetPosition().z <= 0.0f)
+			if (transform.GetPosition().y <= 0.0f)
 			{
 				auto pos = transform.GetPosition();
-				pos.z = 0.0f;
+				pos.y = 0.0f;
 				transform.SetPosition(pos);
 
 				isGrounded = true;
@@ -210,6 +253,8 @@ int main(int argc, char** argv)
 				jumpcharge = 2;
 			}
 		}
+
+		transformCamera.SetPosition(transform.GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
 
 		KGR::RenderWindow::PollEvent();
 		window->Update();
@@ -223,7 +268,6 @@ int main(int argc, char** argv)
 				registry.GetComponent<CameraComponent>(e).UpdateCamera(registry.GetComponent<TransformComponent>(e).GetFullTransform());
 				registry.GetComponent<CameraComponent>(e).SetAspect(window->GetSize().x, window->GetSize().y);
 				window->RegisterCam(registry.GetComponent<CameraComponent>(e), registry.GetComponent<TransformComponent>(e));
-				registry.GetComponent<TransformComponent>(e).SetPosition(registry.GetComponent<TransformComponent>(player).GetPosition() + glm::vec3{ 0,-1,0 });
 			}
 		}
 
