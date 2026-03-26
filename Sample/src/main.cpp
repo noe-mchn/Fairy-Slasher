@@ -283,6 +283,7 @@ int main(int argc, char** argv)
 	KGR::Tools::Chrono<float> chrono;
 	TransformComponent transform;
 	CameraComponent cam;
+	CreatureAIComponent ai;
 
 	auto click = ClickCondition();
 
@@ -295,6 +296,7 @@ int main(int argc, char** argv)
 		window->Update();
 		{
 			auto es = registry.GetAllComponentsView<MeshComponent,TransformComponent>();
+			auto aibox = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
 			auto camTransform = registry.GetComponent<TransformComponent>(registry.GetAllComponentsView<CameraComponent, TransformComponent>().begin()[0]);
 			for (auto& e : es)
 			{
@@ -312,7 +314,8 @@ int main(int argc, char** argv)
 					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(speed * dt));
 
 				if (input->IsMousePressed(KGR::Mouse::Left)) {
-					click.update(registry.GetComponent<TransformComponent>(e), camTransform);
+					click.update(*ai.context.transform, camTransform);
+					//printf("%f, %f, %f\n", ai.context.transform->GetPosition().x, ai.context.transform->GetPosition().y, ai.context.transform->GetPosition().z);
 					printf("clicked\n");
 				}
 
