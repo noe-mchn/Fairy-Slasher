@@ -22,13 +22,14 @@ void PlayerComponent::OxygenDepletion() {
 
 void PlayerComponent::TakeDamage(float amount) {
 	hp -= amount;
+    std::cout << "Took : " << amount << "damages. \n";
 }
 
 bool PlayerComponent::isDead() const {
     if (hp <= 0.0f) {
         return true;
     }
-    else false;
+    else return false;
 }
 
 void PlayerComponent::OxygenReplenish(float amount) {

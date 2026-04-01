@@ -294,7 +294,7 @@ int main(int argc, char** argv)
 	{
 		auto& ai = registry.GetComponent<CreatureAIComponent>(e);
 		auto& tr = registry.GetComponent<TransformComponent>(e);
-		ai.Init(&tr, player->playerTransform, { {5,0,0}, {-5,0,3}, {3,0,-5}, {0,0,0} });
+		ai.Init(&tr, player, { {5,0,0}, {-5,0,3}, {3,0,-5}, {0,0,0} });
 	}
 
 
@@ -391,7 +391,6 @@ int main(int argc, char** argv)
 
 			if (!player->isGrounded)
 			{
-				std::cout << "not grounded\n";
 				player->verticalVelocity -= 3.0f * dt;
 				player->playerTransform->Translate({ 0.0f, player->verticalVelocity * dt, 0.0f });
 				auto positionY = player->playerTransform->GetPosition().y;
@@ -460,6 +459,9 @@ int main(int argc, char** argv)
 			}
 			if (player->isOutOFOxygen()) {
 				std::cout << "Player is out of oxygen!\n";
+			}
+			if (player->isDead()) {
+				std::cout << "Player is dead!\n";
 			}
 
 
