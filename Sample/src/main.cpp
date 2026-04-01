@@ -300,6 +300,8 @@ int main(int argc, char** argv)
 
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+	float timer = 0.0f;
+
 
 	static float mouseSensitivity = 0.0025f;
 	float yaw = 0.0f;
@@ -449,6 +451,17 @@ int main(int argc, char** argv)
 			}
 
 			AISystem::Update(registry, dt);
+
+			timer += dt;
+			if (timer >= 1.0f) {
+				timer -= 1.0f;
+
+				player->OxygenDepletion();
+			}
+			if (player->isOutOFOxygen()) {
+				std::cout << "Player is out of oxygen!\n";
+			}
+
 
 			//Test Sound
 			if (window->GetInputManager()->IsKeyPressed(KGR::Key::P))

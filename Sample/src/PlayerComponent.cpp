@@ -13,7 +13,7 @@ bool PlayerComponent::isOutOFOxygen() const {
     if (oxygen <= 0.0f) {
         return true;
     }
-    else false;
+    else return false;
 }
 
 void PlayerComponent::OxygenDepletion() {
