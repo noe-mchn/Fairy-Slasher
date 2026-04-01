@@ -311,6 +311,8 @@ int main(int argc, char** argv)
 	auto mainCamera = registry.GetAllComponentsView<CameraComponent, TransformComponent>().begin()[0];
 	auto& transformCamera = registry.GetComponent<TransformComponent>(mainCamera);
 
+	assert(player != nullptr && "Player component not found!");
+
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
