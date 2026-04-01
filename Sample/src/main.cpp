@@ -20,6 +20,7 @@
 #include "AI/CreatureData.h"
 #include "AI/CreatureAIComponent.h"
 #include "AI/AISystem.h"
+#include <PlayerComponent.h>
 
 // make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -253,16 +254,38 @@ int main(int argc, char** argv)
 		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
 	}
 
-	TransformComponent* playerTransform = nullptr;
+
+	//Player
 	{
-		auto es = registry.GetAllComponentsView<MeshComponent, TransformComponent>();
-		for (auto& e : es)
+		// A player needs : a Mesh, a Cam, a Transform
+		MeshComponent mesh;
+		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+
+		MaterialComponent mat;
+		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
 		{
-			if (!registry.HasComponent<CreatureAIComponent>(e))
-			{
-				playerTransform = &registry.GetComponent<TransformComponent>(e);
-				break;
-			}
+			Material m;
+			m.baseColor = &TextureLoader::Load("Textures/test_mat_e.png", window->App());
+			mat.materials[i] = m;
+		}
+
+		TransformComponent transform;
+		transform.SetPosition({ 0, 0, 0 });
+		transform.SetScale({ 1.0f, 1.0f, 1.0f });
+
+		PlayerComponent player;
+		player.playerTransform = &transform;
+
+		auto e = registry.CreateEntity();
+		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform), std::move(player));
+	}
+
+	PlayerComponent* player = nullptr;
+	{
+		auto es = registry.GetAllComponentsView<PlayerComponent, TransformComponent>();
+		for (auto& e : es) {
+			player = &registry.GetComponent<PlayerComponent>(e);
 		}
 	}
 
@@ -271,17 +294,12 @@ int main(int argc, char** argv)
 	{
 		auto& ai = registry.GetComponent<CreatureAIComponent>(e);
 		auto& tr = registry.GetComponent<TransformComponent>(e);
-		ai.Init(&tr, playerTransform, { {5,0,0}, {-5,0,3}, {3,0,-5}, {0,0,0} });
+		ai.Init(&tr, player->playerTransform, { {5,0,0}, {-5,0,3}, {3,0,-5}, {0,0,0} });
 	}
 
 
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
-
-	bool isGrounded = true;
-	static float speed = 1.0f;
-	float verticalVelocity = 0.0f;
-	static float jumpcharge = 2;
 
 	static float mouseSensitivity = 0.0025f;
 	float yaw = 0.0f;
@@ -310,7 +328,7 @@ int main(int argc, char** argv)
 
 			pitch = std::clamp(pitch, glm::radians(-89.0f), glm::radians(89.0f));
 
-			playerTransform->SetRotation({ 0.0f, yaw, 0.0f });
+			player->SetRotation({ 0.0f, yaw, 0.0f });
 			transformCamera.SetRotation({ pitch, yaw, 0.0f });
 
 			//this comment is to check camera rotation when there's no visual element
@@ -321,60 +339,72 @@ int main(int argc, char** argv)
 					<< " CamRotZ = " << transformCamera.GetRotation().z << "\n";
 			}*/
 
-
-			glm::vec3 forward = playerTransform->GetLocalAxe<RotData::Dir::Forward>();
-			glm::vec3 right = playerTransform->GetLocalAxe<RotData::Dir::Right>();
-
-
-			forward.y = 0.0f;
-			right.y = 0.0f;
-
-			if (glm::length(forward) > 0.0f)
-				forward = glm::normalize(forward);
-			if (glm::length(right) > 0.0f)
-				right = glm::normalize(right);
-
-
-			speed = input->IsKeyDown(KGR::SpecialKey::Shift) ? 5.0f : 1.0f;
+			if (input->IsKeyDown(KGR::SpecialKey::Shift))
+			{
+				player->startRunning();
+			}
+			if (input->IsKeyReleased(KGR::SpecialKey::Shift))
+			{
+				player->stopRunning();
+			}
 
 			glm::vec3 moveDir{ 0.0f };
 
 			if (input->IsKeyDown(KGR::Key::Z))
-				moveDir += forward;
+				moveDir += player->getForward();
 			if (input->IsKeyDown(KGR::Key::S))
-				moveDir -= forward;
+				moveDir -= player->getForward();
 			if (input->IsKeyDown(KGR::Key::D))
-				moveDir += right;
+				moveDir += player->getRight();
 			if (input->IsKeyDown(KGR::Key::Q))
-				moveDir -= right;
+				moveDir -= player->getRight();
 
 			if (glm::length(moveDir) > 0.0f)
 				moveDir = glm::normalize(moveDir);
 
-			playerTransform->Translate(moveDir * speed * dt);
+			player->move(moveDir, dt);
 
-			if (input->IsKeyPressed(KGR::SpecialKey::Ctrl))
+			if (input->IsKeyDown(KGR::SpecialKey::Ctrl))
 			{
-				playerTransform->SetScale({ 1.0f,1.0, 0.5f });
+				player->startCrouching();
 			}
 			if (input->IsKeyReleased(KGR::SpecialKey::Ctrl))
 			{
-				playerTransform->SetScale({ 1.0f,1.0f,1.0f });
+				player->stopCrouching();
 			}
-
 
 			if (input->IsKeyPressed(KGR::SpecialKey::Space))
 			{
-				if (jumpcharge != 0)
-				{
-					verticalVelocity += 5.0f;
-					jumpcharge--;
+				auto positionY = player->playerTransform->GetPosition().y;
+				if (player->jumpCharge > 0) {
+					player->verticalVelocity += 8.0f;
+					player->jumpCharge--;
 				}
-				isGrounded = false;
+				positionY += player->verticalVelocity * dt;
+				player->playerTransform->Translate({ 0.0f, player->verticalVelocity * dt, 0.0f });
+				if (positionY > 0.0f) {
+					player->isGrounded = false;
+				}
+			}
+
+			if (!player->isGrounded)
+			{
+				std::cout << "not grounded\n";
+				player->verticalVelocity -= 3.0f * dt;
+				player->playerTransform->Translate({ 0.0f, player->verticalVelocity * dt, 0.0f });
+				auto positionY = player->playerTransform->GetPosition().y;
+				if (positionY <= 0.0f)
+				{
+					auto pos = player->playerTransform->GetPosition();
+					pos.y = 0.0f;
+					player->playerTransform->SetPosition(pos);
+					player->isGrounded = true;
+					player->verticalVelocity = 0.0f;
+					player->jumpCharge = 2;
+				}
 			}
 
 			{
-
 				auto mousePos = window.get()->GetInputManager()->GetMousePosition();
 				float aspectRatio = static_cast<float>(window->GetSize().x) / static_cast<float>(window->GetSize().y);
 				auto mouseinAR = UiComponent::VrToNdc(mousePos, window->GetSize(), aspectRatio, false);
@@ -392,24 +422,7 @@ int main(int argc, char** argv)
 						u.SetColor({ 0,1,0,1 });
 				}
 
-				if (!isGrounded)
-				{
-					verticalVelocity -= 3.0f * dt;
-					playerTransform->Translate({ 0.0f, verticalVelocity * dt, 0.0f });
-
-					if (playerTransform->GetPosition().y <= 0.0f)
-					{
-						auto pos = playerTransform->GetPosition();
-						pos.y = 0.0f;
-						playerTransform->SetPosition(pos);
-
-						isGrounded = true;
-						verticalVelocity = 0.0f;
-						jumpcharge = 2;
-					}
-				}
-
-				transformCamera.SetPosition(playerTransform->GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
+				transformCamera.SetPosition(player->playerTransform->GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
 			}
 			{
 				auto es = registry.GetAllComponentsView<CameraComponent, TransformComponent>();
@@ -472,5 +485,5 @@ int main(int argc, char** argv)
 
 	window->Destroy();
 	KGR::RenderWindow::End();
-	
+
 }
