@@ -18,7 +18,6 @@ struct PlayerComponent {
 	glm::vec3 forward;
 	glm::vec3 right;
 	TransformComponent* playerTransform;
-	CameraComponent* playerCam;
 
 	void startRunning();
 
