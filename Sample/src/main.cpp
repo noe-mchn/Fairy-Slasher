@@ -335,14 +335,6 @@ int main(int argc, char** argv)
 			player->SetRotation({ 0.0f, yaw, 0.0f });
 			transformCamera.SetRotation({ pitch, yaw, 0.0f });
 
-			//this comment is to check camera rotation when there's no visual element
-			/*if (mouseX != 0.0f || mouseY != 0.0f)
-			{
-				std::cout << "CamRotX = " << transformCamera.GetRotation().x
-					<< " CamRotY = " << transformCamera.GetRotation().y
-					<< " CamRotZ = " << transformCamera.GetRotation().z << "\n";
-			}*/
-
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 			{
 				player->startRunning();
