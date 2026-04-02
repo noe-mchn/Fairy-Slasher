@@ -36,10 +36,13 @@ int main(int argc, char** argv)
 	// init the rendering system ( init glfw )
 	KGR::RenderWindow::Init();
 	// create your window with the size the name and the resources path
-	std::unique_ptr<KGR::RenderWindow> window = std::make_unique<KGR::RenderWindow>(glm::vec2{ 1920,800 }, "test", projectRoot / "Ressources");
+	
+	//adapt x, y to your screen size
+	std::unique_ptr<KGR::RenderWindow> window = std::make_unique<KGR::RenderWindow>(glm::vec2{ 1920,1080 }, "test", projectRoot / "Ressources");
 
 	// getInputManager retrieve our input system where you can have the mouse pos mouse delta key pressed ... and set the cursor mode 
-	window->GetInputManager()->SetMode(GLFW_CURSOR_NORMAL);
+	//Disabled is to make the cam work smoothly to debug bring back to NORMAL
+	window->GetInputManager()->SetMode(GLFW_CURSOR_DISABLED);
 
 	// create your ecs 
 	ecsType registry = ecsType{};
@@ -267,12 +270,13 @@ int main(int argc, char** argv)
 			m.baseColor = &TextureLoader::Load("Textures/test_mat_e.png", window->App());
 			mat.materials[i] = m;
 		}
+
 		TransformComponent transform;
 		transform.SetPosition({ 0, -100, 0 });
 		transform.SetScale({ 0.3f, 1.0f, 0.25f });
 
 		auto e = registry.CreateEntity();
-		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform));
+		registry.AddComponents(e, std::move(mesh), /*std::move(mat),*/ std::move(transform));
 	}
 
 	//Player
