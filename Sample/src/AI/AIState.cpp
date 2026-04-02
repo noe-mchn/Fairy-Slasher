@@ -216,8 +216,11 @@ void AttackState::Update(float dt)
 
     if (m_elapsed >= m_attackCooldown)
     {
+        //Inflict damage to player Health
+		m_context->player->TakeDamage(15);
         m_elapsed = 0.0f;
     }
+
 }
 
 void AttackState::Input() {}

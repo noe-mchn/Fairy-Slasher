@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <PlayerComponent.h>
 
 struct CreatureData;
 class TransformComponent;
@@ -19,6 +20,7 @@ struct AIContext
     float waitTimer = 0.0f;
     float respirationTimer = 0.0f;
     bool isAlive = true;
+	PlayerComponent* player = nullptr;
 };
 
 class IdleState : public IState
