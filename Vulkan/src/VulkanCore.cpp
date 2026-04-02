@@ -162,7 +162,7 @@ void KGR::_Vulkan::VulkanCore::initVulkan(GLFWwindow* window)
 	std::vector<vk::DescriptorPoolSize> poolSize{
 				vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 2),
 				vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 497),
-				vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer,1)
+				vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, 2)
 	};
 	descriptorPool = DescriptorPool(poolSize, 500, &device);
 
