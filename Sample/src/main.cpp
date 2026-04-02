@@ -254,6 +254,26 @@ int main(int argc, char** argv)
 		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
 	}
 
+	//Hand mesh
+	{
+		MeshComponent mesh;
+		mesh.mesh = &MeshLoader::Load("Models/MAIN2.obj", window->App());
+
+		MaterialComponent mat;
+		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+		{
+			Material m;
+			m.baseColor = &TextureLoader::Load("Textures/test_mat_e.png", window->App());
+			mat.materials[i] = m;
+		}
+		TransformComponent transform;
+		transform.SetPosition({ 0, -100, 0 });
+		transform.SetScale({ 0.3f, 1.0f, 0.25f });
+
+		auto e = registry.CreateEntity();
+		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform));
+	}
 
 	//Player
 	{
@@ -289,6 +309,20 @@ int main(int argc, char** argv)
 		}
 	}
 
+
+	//this check can be wrong if you have multiple mesh and transform without player component might change later
+	TransformComponent* handTransform = nullptr;
+	{
+		auto es = registry.GetAllComponentsView<MeshComponent, TransformComponent>();
+		for (auto& e : es) {
+			auto& mesh = registry.GetComponent<MeshComponent>(e);
+			if (!registry.HasComponent<CreatureAIComponent>(e) || !registry.HasComponent<PlayerComponent>(e)) {
+				handTransform = &registry.GetComponent<TransformComponent>(e);
+				break;
+			}
+		}
+	}
+
 	auto es = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
 	for (auto& e : es)
 	{
@@ -313,6 +347,12 @@ int main(int argc, char** argv)
 
 	assert(player != nullptr && "Player component not found!");
 
+	assert(handTransform != nullptr && "Hand Transform not found!");
+
+	//Base on camera
+	handTransform->SetPosition(transformCamera.GetPosition() + glm::vec3{5.0, -2.0, 0.5});
+	handTransform->SetScale({ 0.1f, 0.25f, 0.25f });
+
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -334,6 +374,7 @@ int main(int argc, char** argv)
 
 			player->SetRotation({ 0.0f, yaw, 0.0f });
 			transformCamera.SetRotation({ pitch, yaw, 0.0f });
+
 
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 			{
@@ -418,6 +459,28 @@ int main(int argc, char** argv)
 				}
 
 				transformCamera.SetPosition(player->playerTransform->GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
+
+				{
+					//for the hand to follow we will have to get the cams infos
+					glm::quat camRot = transformCamera.GetOrientation();
+					auto camPos = transformCamera.GetPosition();
+
+					glm::vec3 right = camRot * glm::vec3(1.0f, 0.0f, 0.0f);
+					glm::vec3 up = camRot * glm::vec3(0.0f, 1.0f, 0.0f);
+					glm::vec3 forward = camRot * glm::vec3(0.0f, 0.0f, -1.0f);
+
+					glm::vec3 localOffset = { 0.25f, -0.2f, 0.5f };
+
+					glm::vec3 handPos =
+						camPos +
+						right * localOffset.x +
+						up * localOffset.y +
+						forward * localOffset.z;
+
+					handTransform->SetPosition(handPos);
+					handTransform->SetOrientation(camRot);
+				}
+
 			}
 			{
 				auto es = registry.GetAllComponentsView<CameraComponent, TransformComponent>();
