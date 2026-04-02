@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include "Core/Transform2dComponent.h"
 #include "Core/UiComponent.h"
@@ -17,9 +18,10 @@
 #include "Audio/SoundComponent.h"
 #include "Math/Collision2d.h"
 
-#include "AI/CreatureData.h"
-#include "AI/CreatureAIComponent.h"
-#include "AI/AISystem.h"
+#include "CreatureData.h"
+#include "CreatureAIComponent.h"
+#include "AISystem.h"
+#include "CaptureSystem.h"
 
 // make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -38,7 +40,7 @@ int main(int argc, char** argv)
 	std::unique_ptr<KGR::RenderWindow> window = std::make_unique<KGR::RenderWindow>(glm::vec2{ 1920,800 }, "test", projectRoot / "Ressources");
 
 	// getInputManager retrieve our input system where you can have the mouse pos mouse delta key pressed ... and set the cursor mode 
-	window->GetInputManager()->SetMode(GLFW_CURSOR_NORMAL);
+	window->GetInputManager()->SetMode(GLFW_CURSOR_DISABLED);
 
 	// create your ecs 
 	ecsType registry = ecsType{};
@@ -50,14 +52,14 @@ int main(int argc, char** argv)
 	// TODO when all test ok move this into a proper place 
 
 	//MUSICS
-	KGR::Audio::WavStreamComponent::Init(projectRoot / "Ressources");
+	KGR::Audio::WavStreamComponent::Init();
 
 	KGR::Audio::WavStreamComponent music;
 	music.SetWav(KGR::Audio::WavStreamManager::Load("Musics/test.mp3"));
 	music.SetVolume(10.0f);
 
 	//SOUNDS
-	KGR::Audio::WavComponent::Init(projectRoot / "Ressources");
+	KGR::Audio::WavComponent::Init();
 
 	KGR::Audio::WavComponent sound;
 	sound.SetWav(KGR::Audio::WavManager::Load("Sounds/sound.mp3"));
@@ -68,66 +70,49 @@ int main(int argc, char** argv)
 		
 
 	// camera 
+	std::uint64_t cameraEntity = 0;
 	{
-		// a calera need a cameraComponent that can be orthographic or perspective and a transform
-
-		// create the camera with the fov , the size of the window (must be updated ) and the far and near rendering and the mode 
+		// a camera needs a CameraComponent (orthographic or perspective) and a transform
 		CameraComponent cam = CameraComponent::Create(glm::radians(45.0f),window->GetSize().x,window->GetSize().y,0.01f,100.0f,CameraComponent::Type::Perspective);
 		TransformComponent transform;
-		// create a transform and set pos and dir 
 		transform.SetPosition({ 0,3,5 });
 		transform.LookAt({ 0,0,0 });
-		// now create an entity , an alias here std::uint64_t
-		auto e = registry.CreateEntity();
+		cameraEntity = registry.CreateEntity();
 
-		// now move the component into the ecs
-		registry.AddComponents(e, std::move(cam), std::move(transform));
+		registry.AddComponents(cameraEntity, std::move(cam), std::move(transform), InventoryComponent{});
 	}
 
 	
-	// mesh
+	// ground plane
 	{
-		// a mesh need a meshComponent a transform and a texture 
-
-		// create a mesh and load it with the cash loader
 		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/cube.obj",window->App());
+		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
 
-		// create a texture 
-		MaterialComponent text;
-		// allocate the size of the texture must be the same as the number of submeshes 
-		text.materials.resize(mesh.mesh->GetSubMeshesCount());
-		// then fill the texture ( this system need to be refact but for now you need to do it like that
+		MaterialComponent mat;
+		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
 		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
 		{
-			Material mat;
-			mat.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
-
-			text.materials[i] = mat;
+			Material m;
+			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+			mat.materials[i] = m;
 		}
 
-		// create the transform and set all the data
 		TransformComponent transform;
-		transform.SetPosition({ 0,0,0 });
-		transform.SetScale({ 2.0f, 1.0f,3.0f });
-		// same create an entity / id
+		transform.SetPosition({ 0, -0.5f, 0 });
+		transform.SetScale({ 50.0f, 0.5f, 50.0f });
+
 		auto e = registry.CreateEntity();
-		// fill the component
-		registry.AddComponents(e, std::move(mesh), std::move(text), std::move(transform));
+		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform));
 	}
 
 	// light
 	{
-		// the light need transform component and light component
-		// all lights type have their own system to create them go in the file to understand
-		LightComponent<LightData::Type::Spot> lc = LightComponent<LightData::Type::Spot>::Create({ 1, 1,1 }, { 1,1,1 }, 10.0f, 100.0f, glm::radians(15.0f), 0.15f);
-		// set the transform but certain light need dir some position or both so just use what necessary 
+		// directional light so the whole scene is illuminated
+		LightComponent<LightData::Type::Directional> lc = LightComponent<LightData::Type::Directional>::Create({ 1, 1,1 }, { 1,1,1 }, 100.0f);
 		TransformComponent transform;
 		transform.SetPosition({ 0,5,0 });
-		transform.LookAtDir({ 0,-1,0 });
-		// same 
+		transform.LookAtDir({ -0.2f,-1,- 0.3f });
 		auto e = registry.CreateEntity();
-		// same
 		registry.AddComponents(e, std::move(lc), std::move(transform));
 	}
 
@@ -278,6 +263,32 @@ int main(int argc, char** argv)
 		}
 	}
 
+	// FPS camera state
+	float yaw   = -90.0f;
+	float pitch = -30.0f;
+	float mouseSensitivity = 0.1f;
+	float moveSpeed = 5.0f;
+	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+	glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f,  0.0f);
+	glm::vec3 worldUp     = glm::vec3(0.0f, 1.0f,  0.0f);
+
+	// Capture state
+	float captureTimer    = 0.0f;
+	float captureDuration = 1.5f;
+	float captureRange    = 2.5f;
+
+	// Compute initial camera vectors from yaw/pitch
+	{
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
+		cameraRight = glm::normalize(glm::cross(cameraFront, worldUp));
+		cameraUp    = glm::normalize(glm::cross(cameraRight, cameraFront));
+	}
+
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
 	while (!window->ShouldClose())
@@ -287,31 +298,104 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
+		// FPS camera: mouse look + ZQSD movement
 		{
-			auto es = registry.GetAllComponentsView<MeshComponent,TransformComponent>();
-			for (auto& e : es)
+			auto input = window->GetInputManager();
+
+			// Mouse look
+			glm::vec2 mouseDelta = input->GetMouseDelta();
+			yaw   += mouseDelta.x * mouseSensitivity;
+			pitch += -mouseDelta.y * mouseSensitivity;
+			pitch  = std::clamp(pitch, -89.0f, 89.0f);
+
+			// Recompute camera direction vectors
+			glm::vec3 front;
+			front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+			front.y = sin(glm::radians(pitch));
+			front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+			cameraFront = glm::normalize(front);
+			cameraRight = glm::normalize(glm::cross(cameraFront, worldUp));
+			cameraUp    = glm::normalize(glm::cross(cameraRight, cameraFront));
+
+			// ZQSD movement on the XZ plane
+			auto& camTransform = registry.GetComponent<TransformComponent>(cameraEntity);
+			glm::vec3 pos = camTransform.GetPosition();
+
+			glm::vec3 flatFront = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
+			glm::vec3 flatRight = glm::normalize(glm::cross(flatFront, worldUp));
+
+			if (input->IsKeyDown(KGR::Key::Z))
+				pos += flatFront * moveSpeed * dt;
+			if (input->IsKeyDown(KGR::Key::S))
+				pos -= flatFront * moveSpeed * dt;
+			if (input->IsKeyDown(KGR::Key::Q))
+				pos -= flatRight * moveSpeed * dt;
+			if (input->IsKeyDown(KGR::Key::D))
+				pos += flatRight * moveSpeed * dt;
+			if (input->IsKeyDown(KGR::SpecialKey::Space))
+				pos.y += moveSpeed * dt;
+			if (input->IsKeyDown(KGR::SpecialKey::Shift))
+				pos.y -= moveSpeed * dt;
+
+			camTransform.SetPosition(pos);
+			camTransform.LookAtDir(cameraFront);
+
+			// Capture: hold R near a creature for captureDuration seconds
+			std::uint64_t nearestCreature{};
+			bool creatureInRange = CaptureSystem::FindNearest(registry, cameraEntity, captureRange, nearestCreature);
+
+			if (input->IsKeyDown(KGR::Key::R) && creatureInRange)
 			{
-				auto input = window->GetInputManager();
-
-				static float speed = 25.0f;
-				if (input->IsKeyDown(KGR::Key::Q))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Yaw>(glm::radians(speed * dt));
-				if (input->IsKeyDown(KGR::Key::D))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Yaw>(glm::radians(-speed * dt));
-
-				if (input->IsKeyDown(KGR::Key::Z))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(-speed * dt));
-				if (input->IsKeyDown(KGR::Key::S))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Pitch>(glm::radians(speed * dt));
-
-
-
-				if (input->IsKeyDown(KGR::Key::A))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Roll>(glm::radians(-speed * dt));
-				if (input->IsKeyDown(KGR::Key::E))
-					registry.GetComponent<TransformComponent>(e).RotateQuat<RotData::Orientation::Roll>(glm::radians(speed * dt));
+				captureTimer += dt;
+				if (captureTimer >= captureDuration)
+				{
+					CaptureSystem::Capture(registry, cameraEntity, nearestCreature);
+					captureTimer = 0.0f;
+				}
+			}
+			else
+			{
+				captureTimer = 0.0f;
 			}
 
+			// Release last captured creature in front of the camera (press T)
+			if (input->IsKeyPressed(KGR::Key::T))
+			{
+				auto& inv = registry.GetComponent<InventoryComponent>(cameraEntity);
+				if (!inv.captured.empty())
+				{
+					CreatureData releasedData = inv.captured.back().data;
+					glm::vec3 releasePos = registry.GetComponent<TransformComponent>(cameraEntity).GetPosition() + cameraFront * 2.0f;
+					inv.ReleaseLast();
+
+					MeshComponent mesh;
+					mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+
+					MaterialComponent mat;
+					mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+					for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+					{
+						Material m;
+						m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+						mat.materials[i] = m;
+					}
+
+					TransformComponent transform;
+					transform.SetPosition(releasePos);
+					transform.SetScale({ 0.5f, 0.5f, 0.5f });
+
+					CreatureAIComponent ai;
+					ai.data = releasedData;
+
+					auto released = registry.CreateEntity();
+					registry.AddComponents(released, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
+
+					auto& relAi = registry.GetComponent<CreatureAIComponent>(released);
+					auto& relTr = registry.GetComponent<TransformComponent>(released);
+					auto* playerTr = &registry.GetComponent<TransformComponent>(cameraEntity);
+					relAi.Init(&relTr, playerTr, { releasePos, {5,0,0}, {-5,0,3}, {3,0,-5} });
+				}
+			}
 		}
 
 		{
@@ -339,7 +423,7 @@ int main(int argc, char** argv)
 	
 		{
 			auto es = registry.GetAllComponentsView<CameraComponent, TransformComponent>();
-			if (es.Size() != 1)
+			if (es.size() != 1)
 				throw std::runtime_error("need one and one cam");
 			for (auto& e : es)
 			{

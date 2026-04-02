@@ -22,13 +22,13 @@ KGR::_Vulkan::Buffer::Buffer(Device* device, PhysicalDevice* phDevice,
 	createBuffer(m_size,  usage, MemoryProperties, m_buffer, m_bufferMemory, device, phDevice);
 }
 
-void KGR::_Vulkan::Buffer::Upload(const void* data, size_t size)
+void KGR::_Vulkan::Buffer::Upload(const void* data, size_t size,size_t offset)
 {	
 	if (!dest)
 		throw std::runtime_error("Buffer not mapped");
-	if (size > m_size)
+	if (offset + size > m_size)
 		throw std::out_of_range("impossible to upload");
-	std::memcpy(dest, data, (size_t)size);
+	std::memcpy(static_cast<char*>(dest) + offset, data, (size_t)size);
 }
 
 
@@ -56,8 +56,10 @@ void KGR::_Vulkan::Buffer::CopyImage( Image* image, Device* device, Queue* queue
 	commandBuffer.copyBufferToImage(m_buffer, image->Get(), vk::ImageLayout::eTransferDstOptimal, { region });
 	commandBuffer.end();
 	vk::SubmitInfo submitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*commandBuffer };
-	queue->Get().submit(submitInfo, nullptr);
-	queue->Get().waitIdle();
+	device->Get().resetFences(*buffers->GetFence(commandBuffer));
+	queue->Get().submit(submitInfo, buffers->GetFence(commandBuffer));
+	auto fenceResult = device->Get().waitForFences({ buffers->GetFence(commandBuffer) }, vk::True, UINT64_MAX);
+	device->Get().resetFences(*buffers->GetFence(commandBuffer));
 	buffers->ReleaseCommandBuffer(commandBuffer);
 }
 
@@ -79,8 +81,10 @@ void KGR::_Vulkan::Buffer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlag
 	 commandBuffer.begin(vk::CommandBufferBeginInfo{ .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
 	commandBuffer.copyBuffer(*srcBuffer, *dstBuffer, vk::BufferCopy(0, 0, size));
 	commandBuffer.end();
-	queue->Get().submit(vk::SubmitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*commandBuffer }, nullptr);
-	queue->Get().waitIdle();
+	device->Get().resetFences(*buffers->GetFence(commandBuffer));
+	queue->Get().submit(vk::SubmitInfo{ .commandBufferCount = 1, .pCommandBuffers = &*commandBuffer }, buffers->GetFence(commandBuffer));
+	auto fenceResult = device->Get().waitForFences({ buffers->GetFence(commandBuffer) }, vk::True, UINT64_MAX);
+	device->Get().resetFences(*buffers->GetFence(commandBuffer));
 	buffers->ReleaseCommandBuffer(commandBuffer);
 }
 
