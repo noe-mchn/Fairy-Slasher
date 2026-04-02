@@ -24,6 +24,13 @@ struct UiComponent
         RightBottom /**< Anchor at the bottom-right corner */
     };
 
+    void setId(int Id) {
+        id = Id;
+    }
+
+    int getId() {
+        return id;
+    }
     /**
      * @brief Converts a 2D vector from virtual resolution space to normalized device coordinates (NDC).
      * @param vec Position in virtual resolution.
@@ -115,6 +122,7 @@ private:
      */
     static glm::vec2 applyOffSet(const glm::vec2& pos, const glm::vec2& scale, Anchor anchor);
 
+    int id;
     glm::vec2 m_virtualRes = { 1920,1080 }; /**< Virtual resolution (width, height) of the UI context */
     glm::vec2 m_pos = { 0,0 };              /**< Position in virtual resolution coordinates */
     glm::vec2 m_scale = { 1,1 };            /**< Scale of the UI element */

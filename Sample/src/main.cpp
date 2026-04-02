@@ -22,9 +22,18 @@
 #include "CreatureAIComponent.h"
 #include "AISystem.h"
 #include "CaptureSystem.h"
+#include "inventory.h"
 
-// make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
+ //make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
+
+UiComponent& getIdUi(std::vector<uint64_t> es, int id, ecsType &registry) {
+	for (const auto& e : es) {
+		auto& u = registry.GetComponent<UiComponent>(e);
+		if (u.getId() == id)
+			return u;
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -64,6 +73,7 @@ int main(int argc, char** argv)
 	KGR::Audio::WavComponent sound;
 	sound.SetWav(KGR::Audio::WavManager::Load("Sounds/sound.mp3"));
 	sound.SetVolume(10.0f);
+	Inventory inventory;
 
 
 	// music test do not mind
@@ -120,22 +130,58 @@ int main(int argc, char** argv)
 	{
 		// you need texture transform and ui component
 		// for the transform it only use for the rotation 
-		TransformComponent2d transform;
+		TransformComponent2d transform1;
+		TransformComponent2d transform2;
+		TransformComponent2d transform3;
+		TransformComponent2d transform4;
 		// here you can set a rotation ( ROTATION FROM THE CENTER OF THE MESH )
 		//transform.SetRotation(glm::radians(-45.0f));
 		// create your ui with a virtual resolution and an anchor default center
-		UiComponent ui({1920,1080},UiComponent::Anchor::LeftTop);
+		UiComponent ui1({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent ui2({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent ui3({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent ui4({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+
 		// here set the position in the virtual resolution
-		ui.SetPos({ 0, 0 });
+		ui1.SetPos({ 870, 900 });
+		ui2.SetPos({ 915, 900 });
+		ui3.SetPos({ 960, 900 });
+		ui4.SetPos({ 1005, 900 });
+
 		// here the scale
-		ui.SetScale({ 200,200 });
+		ui1.SetScale({ 40,40 });
+		ui2.SetScale({ 40,40 });
+		ui3.SetScale({ 40,40 });
+		ui4.SetScale({ 40,40 });
+
+		ui1.setId(0);
+		ui2.setId(1);
+		ui3.setId(2);
+		ui4.setId(3);
+
 		// create a texture but be aware that only the first texture in the component will be use 
-		TextureComponent texture;
-		texture.texture =  &TextureLoader::Load("Textures/texture.jpg", window->App());
+		TextureComponent texture1;
+		TextureComponent texture2;
+		TextureComponent texture3;
+		TextureComponent texture4;
+
+		texture1.texture =  &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+		texture2.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+		texture3.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+		texture4.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+
 		
 		// same as always 
-		auto e = registry.CreateEntity();
-		registry.AddComponents(e, std::move(transform), std::move(ui),std::move(texture), std::move(CollisionComp2d{}));
+		auto e1 = registry.CreateEntity();
+		auto e2 = registry.CreateEntity();
+		auto e3 = registry.CreateEntity();
+		auto e4 = registry.CreateEntity();
+
+		registry.AddComponents(e1, std::move(transform1), std::move(ui1),std::move(texture1), std::move(CollisionComp2d{}));
+		registry.AddComponents(e2, std::move(transform2), std::move(ui2), std::move(texture2), std::move(CollisionComp2d{}));
+		registry.AddComponents(e3, std::move(transform3), std::move(ui3), std::move(texture3), std::move(CollisionComp2d{}));
+		registry.AddComponents(e4, std::move(transform4), std::move(ui4), std::move(texture4), std::move(CollisionComp2d{}));
+
 
 	}
 
@@ -289,6 +335,9 @@ int main(int argc, char** argv)
 		cameraUp    = glm::normalize(glm::cross(cameraRight, cameraFront));
 	}
 
+
+
+	auto ui = registry.GetAllComponentsView<UiComponent>();
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
 	while (!window->ShouldClose())
@@ -336,6 +385,23 @@ int main(int argc, char** argv)
 				pos.y += moveSpeed * dt;
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 				pos.y -= moveSpeed * dt;
+
+			if (input->IsKeyDown(KGR::Key::Num1)) {
+				auto& u = getIdUi(ui, 0, registry);
+				u.SetPos({ 870, 890 });
+			}
+			if (input->IsKeyDown(KGR::Key::Num2)) {
+				auto& u = getIdUi(ui, 1, registry);
+				u.SetPos({ 915, 890 });
+			}
+			if (input->IsKeyDown(KGR::Key::Num3)) {
+				auto& u = getIdUi(ui, 2, registry);
+				u.SetPos({ 960, 890 });
+			}
+			if (input->IsKeyDown(KGR::Key::Num4)) {
+				auto& u = getIdUi(ui, 3, registry);
+				u.SetPos({ 1005, 890 });
+			}
 
 			camTransform.SetPosition(pos);
 			camTransform.LookAtDir(cameraFront);
@@ -411,10 +477,10 @@ int main(int argc, char** argv)
 				auto& u = registry.GetComponent<UiComponent>(e);
 				t.Update(u.GetPosNdc(aspectRatio), u.GetScaleNdc(aspectRatio));
 				
-				if (t.aabb.IsColliding(mouseinAR))
-					u.SetColor({ 1,0,0,1 });
-				else
-					u.SetColor({ 0,1,0,1 });
+				//if (t.aabb.IsColliding(mouseinAR))
+				//	u.SetColor({ 1,0,0,1 });
+				//else
+				//	u.SetColor({ 0,1,0,1 });
 			}
 		}
 
