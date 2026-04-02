@@ -389,18 +389,52 @@ int main(int argc, char** argv)
 			if (input->IsKeyDown(KGR::Key::Num1)) {
 				auto& u = getIdUi(ui, 0, registry);
 				u.SetPos({ 870, 890 });
+				auto &u1 = getIdUi(ui, 1, registry);
+				u1.SetPos({ 915, 900 });
+				auto &u2 = getIdUi(ui, 2, registry);
+				u2.SetPos({ 960, 900 });
+				auto &u3 = getIdUi(ui, 3, registry);
+				u3.SetPos({ 1005, 900 });
 			}
 			if (input->IsKeyDown(KGR::Key::Num2)) {
 				auto& u = getIdUi(ui, 1, registry);
 				u.SetPos({ 915, 890 });
+				auto &u1 = getIdUi(ui, 2, registry);
+				u1.SetPos({ 960, 900 });
+				auto &u2 = getIdUi(ui, 3, registry);
+				u2.SetPos({ 1005, 900 });
+				auto &u3 = getIdUi(ui, 0, registry);
+				u3.SetPos({ 870, 900 });
 			}
 			if (input->IsKeyDown(KGR::Key::Num3)) {
 				auto& u = getIdUi(ui, 2, registry);
 				u.SetPos({ 960, 890 });
+				auto &u1 = getIdUi(ui, 1, registry);
+				u1.SetPos({ 915, 900 });
+				auto &u2 = getIdUi(ui, 3, registry);
+				u2.SetPos({ 1005, 900 });
+				auto &u3 = getIdUi(ui, 0, registry);
+				u3.SetPos({ 870, 900 });
 			}
 			if (input->IsKeyDown(KGR::Key::Num4)) {
 				auto& u = getIdUi(ui, 3, registry);
 				u.SetPos({ 1005, 890 });
+				auto &u1 = getIdUi(ui, 1, registry);
+				u1.SetPos({ 915, 900 });
+				auto &u2 = getIdUi(ui, 2, registry);
+				u2.SetPos({ 960, 900 });
+				auto &u3 = getIdUi(ui, 0, registry);
+				u3.SetPos({ 870, 900 });
+			}
+			if (input->IsKeyDown(KGR::Key::Num5)) {
+				auto& u = getIdUi(ui, 3, registry);
+				u.SetPos({ 1005, 900 });
+				auto& u1 = getIdUi(ui, 1, registry);
+				u1.SetPos({ 915, 900 });
+				auto& u2 = getIdUi(ui, 2, registry);
+				u2.SetPos({ 960, 900 });
+				auto& u3 = getIdUi(ui, 0, registry);
+				u3.SetPos({ 870, 900 });
 			}
 
 			camTransform.SetPosition(pos);
