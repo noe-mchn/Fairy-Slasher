@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <cstdlib>
 
 #include "Core/Transform2dComponent.h"
 #include "Core/UiComponent.h"
@@ -22,7 +23,10 @@
 #include "CreatureAIComponent.h"
 #include "AISystem.h"
 #include "CaptureSystem.h"
-#include "inventory.h"
+#include "CauldronComponent.h"
+#include "CauldronSystem.h"
+#include "LootInventoryComponent.h"
+#include "PlayerUpgradeComponent.h"
 
  //make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -73,7 +77,6 @@ int main(int argc, char** argv)
 	KGR::Audio::WavComponent sound;
 	sound.SetWav(KGR::Audio::WavManager::Load("Sounds/sound.mp3"));
 	sound.SetVolume(10.0f);
-	Inventory inventory;
 
 
 	// music test do not mind
@@ -89,7 +92,7 @@ int main(int argc, char** argv)
 		transform.LookAt({ 0,0,0 });
 		cameraEntity = registry.CreateEntity();
 
-		registry.AddComponents(cameraEntity, std::move(cam), std::move(transform), InventoryComponent{});
+		registry.AddComponents(cameraEntity, std::move(cam), std::move(transform), InventoryComponent{}, LootInventoryComponent{}, PlayerUpgradeComponent{});
 	}
 
 	// lantern (held by player, attached to camera)
@@ -145,6 +148,32 @@ int main(int argc, char** argv)
 		transform.LookAtDir({ -0.2f,-1,- 0.3f });
 		auto e = registry.CreateEntity();
 		registry.AddComponents(e, std::move(lc), std::move(transform));
+	}
+
+	// cauldron
+	{
+		MeshComponent mesh;
+		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+
+		MaterialComponent mat;
+		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+		{
+			Material m;
+			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+			mat.materials[i] = m;
+		}
+
+		TransformComponent transform;
+		transform.SetPosition({ 0, 0, -3 });
+		transform.SetScale({ 0.8f, 0.8f, 0.8f });
+
+		CauldronComponent cauldron;
+		cauldron.maxSlots = 1;
+		cauldron.interactionRange = 5.0f;
+
+		auto e = registry.CreateEntity();
+		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform), std::move(cauldron));
 	}
 
 	// ui ( not fully operational)
@@ -343,6 +372,13 @@ int main(int argc, char** argv)
 	float captureDuration = 1.5f;
 	float captureRange    = 2.5f;
 
+	// creature respawn
+	const glm::vec3 spawnPoints[] = { {5,0,0}, {-5,0,3}, {3,0,-5}, {-3,0,-4}, {7,0,2}, {-7,0,-2} };
+	const int spawnPointCount = sizeof(spawnPoints) / sizeof(spawnPoints[0]);
+	const size_t maxCreaturesInWorld = 4;
+	float respawnTimer = 0.0f;
+	const float respawnInterval = 15.0f;
+
 	{
 		glm::vec3 front;
 		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -401,55 +437,107 @@ int main(int argc, char** argv)
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 				pos.y -= moveSpeed * dt;
 
-			if (input->IsKeyDown(KGR::Key::Num1)) {
-				auto& u = getIdUi(ui, 0, registry);
-				u.SetPos({ 870, 890 });
-				auto &u1 = getIdUi(ui, 1, registry);
-				u1.SetPos({ 915, 900 });
-				auto &u2 = getIdUi(ui, 2, registry);
-				u2.SetPos({ 960, 900 });
-				auto &u3 = getIdUi(ui, 3, registry);
-				u3.SetPos({ 1005, 900 });
+			// slot selection (1-4)
+			auto& inv = registry.GetComponent<InventoryComponent>(cameraEntity);
+			if (input->IsKeyPressed(KGR::Key::Num1)) { inv.selectedSlot = 0; std::cout << "[INV] Slot 1 selected" << std::endl; }
+			if (input->IsKeyPressed(KGR::Key::Num2)) { inv.selectedSlot = 1; std::cout << "[INV] Slot 2 selected" << std::endl; }
+			if (input->IsKeyPressed(KGR::Key::Num3)) { inv.selectedSlot = 2; std::cout << "[INV] Slot 3 selected" << std::endl; }
+			if (input->IsKeyPressed(KGR::Key::Num4)) { inv.selectedSlot = 3; std::cout << "[INV] Slot 4 selected" << std::endl; }
+
+			// update UI to highlight selected slot
+			{
+				const glm::vec2 slotPositions[4] = { {870,900}, {915,900}, {960,900}, {1005,900} };
+				for (int s = 0; s < 4; ++s)
+				{
+					auto& u = getIdUi(ui, s, registry);
+					glm::vec2 p = slotPositions[s];
+					if (s == inv.selectedSlot)
+						p.y = 890;
+					u.SetPos(p);
+				}
 			}
-			if (input->IsKeyDown(KGR::Key::Num2)) {
-				auto& u = getIdUi(ui, 1, registry);
-				u.SetPos({ 915, 890 });
-				auto &u1 = getIdUi(ui, 2, registry);
-				u1.SetPos({ 960, 900 });
-				auto &u2 = getIdUi(ui, 3, registry);
-				u2.SetPos({ 1005, 900 });
-				auto &u3 = getIdUi(ui, 0, registry);
-				u3.SetPos({ 870, 900 });
+
+			// E : deposit selected creature into nearest cauldron
+			if (input->IsKeyPressed(KGR::Key::E))
+			{
+				std::cout << "[CAULDRON] Trying to deposit from slot " << inv.selectedSlot + 1
+						  << (inv.IsSlotEmpty(inv.selectedSlot) ? " (EMPTY)" : " (has creature)") << std::endl;
+				bool deposited = CauldronSystem::DepositCreature(registry, cameraEntity, inv.selectedSlot);
+				if (deposited)
+					std::cout << "[CAULDRON] >> Creature deposited! Infusion started." << std::endl;
+				else
+					std::cout << "[CAULDRON] >> Failed (empty slot, no cauldron nearby, or cauldron full)" << std::endl;
 			}
-			if (input->IsKeyDown(KGR::Key::Num3)) {
-				auto& u = getIdUi(ui, 2, registry);
-				u.SetPos({ 960, 890 });
-				auto &u1 = getIdUi(ui, 1, registry);
-				u1.SetPos({ 915, 900 });
-				auto &u2 = getIdUi(ui, 3, registry);
-				u2.SetPos({ 1005, 900 });
-				auto &u3 = getIdUi(ui, 0, registry);
-				u3.SetPos({ 870, 900 });
+
+			// F : collect finished loot from nearest cauldron
+			if (input->IsKeyPressed(KGR::Key::F))
+			{
+				// debug: show distance to every cauldron
+				size_t slotsBefore = 0;
+				{
+					glm::vec3 pPos = registry.GetComponent<TransformComponent>(cameraEntity).GetPosition();
+					auto cds = registry.GetAllComponentsView<CauldronComponent, TransformComponent>();
+					for (auto& ce : cds)
+					{
+						auto& ct = registry.GetComponent<TransformComponent>(ce);
+						auto& cc = registry.GetComponent<CauldronComponent>(ce);
+						slotsBefore += cc.slots.size();
+						float d = glm::length(ct.GetPosition() - pPos);
+						std::cout << "[CAULDRON] Distance: " << d << " (range=" << cc.interactionRange << ", finished=" << cc.FinishedCount() << ")" << std::endl;
+					}
+				}
+				int collected = CauldronSystem::CollectLoot(registry, cameraEntity);
+				size_t slotsAfter = 0;
+				{
+					auto cds = registry.GetAllComponentsView<CauldronComponent>();
+					for (auto& ce : cds)
+						slotsAfter += registry.GetComponent<CauldronComponent>(ce).slots.size();
+				}
+				if (collected > 0)
+				{
+					std::cout << "[CAULDRON] >> Collected " << collected << " loot(s)!" << std::endl;
+					auto& lootInv = registry.GetComponent<LootInventoryComponent>(cameraEntity);
+					for (auto& item : lootInv.items)
+						std::cout << "  - " << item.name << " x" << item.quantity << std::endl;
+				}
+				else if (slotsBefore > slotsAfter)
+					std::cout << "[CAULDRON] >> Infusion processed but loot roll FAILED (bad luck! creature lost)" << std::endl;
+				else
+					std::cout << "[CAULDRON] >> No loot ready (not near cauldron, or infusion not finished)" << std::endl;
 			}
-			if (input->IsKeyDown(KGR::Key::Num4)) {
-				auto& u = getIdUi(ui, 3, registry);
-				u.SetPos({ 1005, 890 });
-				auto &u1 = getIdUi(ui, 1, registry);
-				u1.SetPos({ 915, 900 });
-				auto &u2 = getIdUi(ui, 2, registry);
-				u2.SetPos({ 960, 900 });
-				auto &u3 = getIdUi(ui, 0, registry);
-				u3.SetPos({ 870, 900 });
+
+			// V : unlock night vision (requires 1 "Rare Souls Essences")
+			if (input->IsKeyPressed(KGR::Key::V))
+			{
+				if (registry.HasComponent<PlayerUpgradeComponent>(cameraEntity) &&
+					registry.HasComponent<LootInventoryComponent>(cameraEntity))
+				{
+					auto& upgrades = registry.GetComponent<PlayerUpgradeComponent>(cameraEntity);
+					auto& lootInv  = registry.GetComponent<LootInventoryComponent>(cameraEntity);
+					if (upgrades.nightVision)
+						std::cout << "[UPGRADE] Night Vision already unlocked" << std::endl;
+					else if (PlayerUpgradeComponent::TryUnlockNightVision(upgrades, lootInv))
+						std::cout << "[UPGRADE] >> Night Vision UNLOCKED!" << std::endl;
+					else
+						std::cout << "[UPGRADE] >> Not enough loot (need 1x Rare Souls Essences, have " << lootInv.GetQuantity("Rare Souls Essences") << ")" << std::endl;
+				}
 			}
-			if (input->IsKeyDown(KGR::Key::Num5)) {
-				auto& u = getIdUi(ui, 3, registry);
-				u.SetPos({ 1005, 900 });
-				auto& u1 = getIdUi(ui, 1, registry);
-				u1.SetPos({ 915, 900 });
-				auto& u2 = getIdUi(ui, 2, registry);
-				u2.SetPos({ 960, 900 });
-				auto& u3 = getIdUi(ui, 0, registry);
-				u3.SetPos({ 870, 900 });
+
+			// J : unlock double jump (requires 1 "Fairy Wings")
+			if (input->IsKeyPressed(KGR::Key::J))
+			{
+				if (registry.HasComponent<PlayerUpgradeComponent>(cameraEntity) &&
+					registry.HasComponent<LootInventoryComponent>(cameraEntity))
+				{
+					auto& upgrades = registry.GetComponent<PlayerUpgradeComponent>(cameraEntity);
+					auto& lootInv  = registry.GetComponent<LootInventoryComponent>(cameraEntity);
+					if (upgrades.doubleJump)
+						std::cout << "[UPGRADE] Double Jump already unlocked" << std::endl;
+					else if (PlayerUpgradeComponent::TryUnlockDoubleJump(upgrades, lootInv))
+						std::cout << "[UPGRADE] >> Double Jump UNLOCKED!" << std::endl;
+					else
+						std::cout << "[UPGRADE] >> Not enough loot (need 1x Fairy Wings, have " << lootInv.GetQuantity("Fairy Wings") << ")" << std::endl;
+				}
 			}
 
 			camTransform.SetPosition(pos);
@@ -469,25 +557,38 @@ int main(int argc, char** argv)
 			if (input->IsKeyDown(KGR::Key::R) && creatureInRange)
 			{
 				captureTimer += dt;
+				std::cout << "\r[CAPTURE] Capturing... " << static_cast<int>(captureTimer / captureDuration * 100) << "%" << std::flush;
 				if (captureTimer >= captureDuration)
 				{
-					CaptureSystem::Capture(registry, cameraEntity, nearestCreature);
+					bool ok = CaptureSystem::Capture(registry, cameraEntity, nearestCreature);
+					std::cout << std::endl;
+					if (ok)
+					{
+						std::cout << "[CAPTURE] >> Creature captured! Inventory:";
+						for (int s = 0; s < 4; ++s)
+							std::cout << " [" << s+1 << "]=" << (inv.IsSlotEmpty(s) ? "vide" : "plein");
+						std::cout << std::endl;
+					}
+					else
+						std::cout << "[CAPTURE] >> Failed (inventory full?)" << std::endl;
 					captureTimer = 0.0f;
 				}
 			}
 			else
 			{
+				if (captureTimer > 0.0f)
+					std::cout << std::endl << "[CAPTURE] Cancelled" << std::endl;
 				captureTimer = 0.0f;
 			}
 
 			if (input->IsKeyPressed(KGR::Key::T))
 			{
-				auto& inv = registry.GetComponent<InventoryComponent>(cameraEntity);
-				if (!inv.captured.empty())
+				auto removed = inv.RemoveFromSlot(inv.selectedSlot);
+				if (removed.has_value())
 				{
-					CreatureData releasedData = inv.captured.back().data;
+					std::cout << "[INV] Released creature from slot " << inv.selectedSlot + 1 << std::endl;
+					CreatureData releasedData = removed->data;
 					glm::vec3 releasePos = registry.GetComponent<TransformComponent>(cameraEntity).GetPosition() + cameraFront * 2.0f;
-					inv.ReleaseLast();
 
 					MeshComponent mesh;
 					mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
@@ -568,6 +669,91 @@ int main(int argc, char** argv)
 		}
 
 		AISystem::Update(registry, dt);
+		CauldronSystem::Update(registry, dt);
+
+		// creature respawn
+		{
+			auto creatures = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
+			if (creatures.size() < maxCreaturesInWorld)
+			{
+				respawnTimer += dt;
+				if (respawnTimer >= respawnInterval)
+				{
+					respawnTimer = 0.0f;
+
+					// pick a random creature type
+					CreatureData newData;
+					float scale = 0.5f;
+					int typeRoll = std::rand() % 4;
+					switch (typeRoll)
+					{
+					case 0: newData = CreatureData::MakeSouls();     scale = 0.5f;  break;
+					case 1: newData = CreatureData::MakeFairy();     scale = 0.4f;  break;
+					case 2: newData = CreatureData::MakeRareSoul();  scale = 0.6f;  break;
+					case 3: newData = CreatureData::MakeRareFairy(); scale = 0.35f; break;
+					}
+
+					glm::vec3 spawnPos = spawnPoints[std::rand() % spawnPointCount];
+
+					MeshComponent mesh;
+					mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+
+					MaterialComponent mat;
+					mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+					for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+					{
+						Material m;
+						m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+						mat.materials[i] = m;
+					}
+
+					TransformComponent transform;
+					transform.SetPosition(spawnPos);
+					transform.SetScale({ scale, scale, scale });
+
+					CreatureAIComponent ai;
+					ai.data = newData;
+
+					auto spawned = registry.CreateEntity();
+					registry.AddComponents(spawned, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
+
+					auto& spAi = registry.GetComponent<CreatureAIComponent>(spawned);
+					auto& spTr = registry.GetComponent<TransformComponent>(spawned);
+					auto* playerTr = &registry.GetComponent<TransformComponent>(cameraEntity);
+					spAi.Init(&spTr, playerTr, { spawnPos, {5,0,0}, {-5,0,3}, {3,0,-5} });
+
+					std::cout << "[SPAWN] New creature spawned: " << newData.lootName
+							  << " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
+				}
+			}
+			else
+			{
+				respawnTimer = 0.0f;
+			}
+		}
+
+		// debug: print cauldron infusion progress once per second
+		{
+			static float cauldronLogTimer = 0.0f;
+			cauldronLogTimer += dt;
+			if (cauldronLogTimer >= 1.0f)
+			{
+				cauldronLogTimer = 0.0f;
+				auto cauldrons = registry.GetAllComponentsView<CauldronComponent>();
+				for (auto& ce : cauldrons)
+				{
+					auto& c = registry.GetComponent<CauldronComponent>(ce);
+					for (size_t i = 0; i < c.slots.size(); ++i)
+					{
+						auto& slot = c.slots[i];
+						if (!slot.finished)
+							std::cout << "[CAULDRON] Infusing " << slot.data.lootName << " : " << static_cast<int>(slot.elapsed) << "s / " << static_cast<int>(slot.data.infusionTime) << "s" << std::endl;
+						else
+							std::cout << "[CAULDRON] " << slot.data.lootName << " READY! Press F near cauldron to collect." << std::endl;
+					}
+				}
+			}
+		}
 
 		//Test Sound
 		if(window->GetInputManager()->IsKeyPressed(KGR::Key::P))
@@ -600,7 +786,15 @@ int main(int argc, char** argv)
 					window->RegisterUi(ui,transform,texture);
 				}
 		}
-		window->Render({ 0.53f, 0.81f, 0.92f, 1.0f });
+		// night vision changes the ambient clear color
+		glm::vec4 clearColor = { 0.53f, 0.81f, 0.92f, 1.0f };
+		if (registry.HasComponent<PlayerUpgradeComponent>(cameraEntity))
+		{
+			auto& upgrades = registry.GetComponent<PlayerUpgradeComponent>(cameraEntity);
+			if (upgrades.nightVision)
+				clearColor = { 0.1f, 0.4f, 0.15f, 1.0f };
+		}
+		window->Render(clearColor);
 	}
 
 	window->Destroy();
