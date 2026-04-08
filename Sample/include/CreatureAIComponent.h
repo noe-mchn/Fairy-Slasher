@@ -29,3 +29,4 @@ struct CreatureAIComponent
         initialized = true;
     }
 };
+

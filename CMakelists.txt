@@ -21,8 +21,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Add you project here
 add_subdirectory(Sample)
-add_subdirectory(SampleGui)
-add_subdirectory(EmptyProject)
 add_subdirectory(GLFW_)
 add_subdirectory(GameLib)
 add_subdirectory(Vulkan)

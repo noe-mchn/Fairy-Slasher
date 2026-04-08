@@ -92,7 +92,28 @@ int main(int argc, char** argv)
 		registry.AddComponents(cameraEntity, std::move(cam), std::move(transform), InventoryComponent{});
 	}
 
-	
+	// lantern (held by player, attached to camera)
+	std::uint64_t lanternEntity = 0;
+	{
+		MeshComponent mesh;
+		mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
+
+		MaterialComponent mat;
+		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+		{
+			Material m;
+			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+			mat.materials[i] = m;
+		}
+
+		TransformComponent transform;
+		transform.SetScale({ 0.15f, 0.15f, 0.15f });
+
+		lanternEntity = registry.CreateEntity();
+		registry.AddComponents(lanternEntity, std::move(mesh), std::move(mat), std::move(transform));
+	}
+
 	// ground plane
 	{
 		MeshComponent mesh;
@@ -309,7 +330,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	// FPS camera state
 	float yaw   = -90.0f;
 	float pitch = -30.0f;
 	float mouseSensitivity = 0.1f;
@@ -319,12 +339,10 @@ int main(int argc, char** argv)
 	glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f,  0.0f);
 	glm::vec3 worldUp     = glm::vec3(0.0f, 1.0f,  0.0f);
 
-	// Capture state
 	float captureTimer    = 0.0f;
 	float captureDuration = 1.5f;
 	float captureRange    = 2.5f;
 
-	// Compute initial camera vectors from yaw/pitch
 	{
 		glm::vec3 front;
 		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -347,17 +365,15 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
-		// FPS camera: mouse look + ZQSD movement
+
 		{
 			auto input = window->GetInputManager();
 
-			// Mouse look
 			glm::vec2 mouseDelta = input->GetMouseDelta();
 			yaw   += mouseDelta.x * mouseSensitivity;
 			pitch += -mouseDelta.y * mouseSensitivity;
 			pitch  = std::clamp(pitch, -89.0f, 89.0f);
 
-			// Recompute camera direction vectors
 			glm::vec3 front;
 			front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 			front.y = sin(glm::radians(pitch));
@@ -366,7 +382,6 @@ int main(int argc, char** argv)
 			cameraRight = glm::normalize(glm::cross(cameraFront, worldUp));
 			cameraUp    = glm::normalize(glm::cross(cameraRight, cameraFront));
 
-			// ZQSD movement on the XZ plane
 			auto& camTransform = registry.GetComponent<TransformComponent>(cameraEntity);
 			glm::vec3 pos = camTransform.GetPosition();
 
@@ -440,7 +455,14 @@ int main(int argc, char** argv)
 			camTransform.SetPosition(pos);
 			camTransform.LookAtDir(cameraFront);
 
-			// Capture: hold R near a creature for captureDuration seconds
+			// update lantern to follow camera (FPS arm)
+			{
+				auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
+				glm::vec3 lanternPos = pos + cameraFront * 0.35f + cameraRight * 0.15f - cameraUp * 0.1f;
+				lanternTransform.SetPosition(lanternPos);
+				lanternTransform.LookAtDir(cameraFront);
+			}
+
 			std::uint64_t nearestCreature{};
 			bool creatureInRange = CaptureSystem::FindNearest(registry, cameraEntity, captureRange, nearestCreature);
 
@@ -458,7 +480,6 @@ int main(int argc, char** argv)
 				captureTimer = 0.0f;
 			}
 
-			// Release last captured creature in front of the camera (press T)
 			if (input->IsKeyPressed(KGR::Key::T))
 			{
 				auto& inv = registry.GetComponent<InventoryComponent>(cameraEntity);
