@@ -32,6 +32,7 @@
 #include "Core/Vertex.h"
 #include "../../Editor/include/Offscreen.h"
 #include "Core/Materials.h"
+#include "Core/TextComponent.h"
 
 struct Texture;
 struct CameraComponent;
@@ -46,7 +47,7 @@ struct MeshData
 	/**
 	 * @brief Model transformation matrix.
 	 */
-	glm::mat4 matrixModel;
+	std::vector<glm::mat4> matrixModels;
 
 	/**
 	 * @brief Pointer to mesh object.
@@ -59,6 +60,25 @@ struct MeshData
 	std::vector<Material> texture;
 };
 
+static bool IsSameMat(const std::vector<Material>& lhs, const std::vector<Material>& rhs)
+{
+	if (lhs.size() != rhs.size())
+		return false;
+	for (int i = 0; i< lhs.size() ; ++i)
+	{
+		if (lhs[i] != rhs[i])
+			return false;
+	}
+	return true;
+}
+
+static bool IsSameMesh(Mesh* lhsMesh, const std::vector<Material>& lhsMats,Mesh* rhsMesh, const std::vector<Material>& rhsMats)
+{
+	if (lhsMesh != rhsMesh)
+		return false;
+	return IsSameMat(lhsMats, rhsMats);
+}
+
 /**
  * @brief Struct representing a line segment for debug rendering.
  */
@@ -69,6 +89,22 @@ struct Segment
 	float  thickness; ///< Line thickness
 	glm::vec4 color;  ///< Line color
 };
+
+
+struct TextData
+{
+	Text* text;
+	Texture* texture;
+	UiData::UiValidData data;
+};
+
+struct UiDataGPU
+{
+	Texture* texture;
+	UiData::UiValidData data;
+	Texture* whiteTexture;
+ };
+
 
 namespace KGR
 {
@@ -89,7 +125,10 @@ namespace KGR
 			 * @param window Pointer to GLFW window.
 			 */
 			void initVulkan(GLFWwindow* window);
-
+			~VulkanCore()
+			{
+				device.Get().waitIdle();
+			}
 			/**
 			 * @brief Debug callback function for Vulkan validation layers.
 			 */
@@ -109,6 +148,9 @@ namespace KGR
 			 * @return Vulkan Image object.
 			 */
 			Image CreateImage(const std::string& filePath);
+
+			Image CreateImageFromData(const unsigned char* pixels, int width, int height);
+
 
 			/**
 			 * @brief Creates a descriptor set for a given image.
@@ -187,7 +229,8 @@ namespace KGR
 			 * @param texture Vector of textures for the mesh
 			 */
 			void RegisterRender(Mesh& mesh, const glm::mat4& model,const  std::vector<Material>& texture);
-			void RegisterUi(const UiData& data, Texture* texture,const glm::vec2& screenSize);
+			void RegisterUi(const UiData& data, Texture* texture,const glm::vec2& screenSize, Texture* whiteTexture);
+			void RegisterText(Text* text,Texture* texture,const UiData& data, const glm::vec2& screenSize);
 			/**
 			 * @brief Performs rendering of registered meshes, lights, and optionally ImGui data.
 			 * @param window GLFW window pointer
@@ -259,10 +302,12 @@ namespace KGR
 			DescriptorSet m_LightSet;
 			Buffer m_lightBuffer;
 			Buffer m_lightCount;
+			Buffer m_transformBuffer;
+			DescriptorSet m_transformSet;
 			std::optional<UniformBufferObject> m_ubo;
 			std::vector<MeshData> m_toRenderObject;
-			std::vector<std::pair<Texture*, UiData::UiValidData>> uIRender;
-
+			std::vector<UiDataGPU> uIRender;
+			std::vector<TextData> m_textData;
 
 
 			Buffer uiVertexBuffer;
