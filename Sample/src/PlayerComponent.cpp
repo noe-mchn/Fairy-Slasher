@@ -90,3 +90,7 @@ glm::vec3 PlayerComponent::SetScale(const glm::vec3& newScale) {
     playerTransform->SetScale(newScale);
     return playerTransform->GetScale();
 }
+
+int PlayerComponent::getOxygen() {
+    return static_cast<int>(oxygen);
+}

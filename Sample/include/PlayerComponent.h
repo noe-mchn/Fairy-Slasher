@@ -26,6 +26,8 @@ struct PlayerComponent {
 	bool isOutOFOxygen() const;
 
 	void OxygenDepletion();
+	
+	int getOxygen();
 
 	void TakeDamage(float amount);
 

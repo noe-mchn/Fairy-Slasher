@@ -50,14 +50,16 @@ struct CauldronSystem
     // -----------------------------------------------------------------
 
     /**
-     * @brief Deposits the first captured creature from the player's
-     *        inventory into the nearest cauldron with a free slot.
+     * @brief Deposits the creature from the given inventory slot
+     *        into the nearest cauldron with a free slot.
      *
+     * @param slotIndex  The inventory slot to deposit from.
      * @return true if a creature was deposited.
      */
     template<typename RegistryType>
     static bool DepositCreature(RegistryType& registry,
-                                typename RegistryType::type playerEntity)
+                                typename RegistryType::type playerEntity,
+                                int slotIndex)
     {
         if (!registry.template HasComponent<InventoryComponent>(playerEntity))
             return false;
@@ -66,7 +68,7 @@ struct CauldronSystem
         auto& playerTrans = registry.template GetComponent<TransformComponent>(playerEntity);
         glm::vec3 playerPos = playerTrans.GetPosition();
 
-        if (inventory.captured.empty())
+        if (inventory.IsSlotEmpty(slotIndex))
             return false;
 
         // Find the nearest cauldron in interaction range with a free slot.
@@ -74,7 +76,7 @@ struct CauldronSystem
 
         using EntityType = typename RegistryType::type;
         EntityType bestCauldron{};
-        float bestDist = std::numeric_limits<float>::max();
+        float bestDist = (std::numeric_limits<float>::max)();
         bool found     = false;
 
         for (auto& e : cauldrons)
@@ -99,8 +101,10 @@ struct CauldronSystem
             return false;
 
         auto& cauldron = registry.template GetComponent<CauldronComponent>(bestCauldron);
-        cauldron.AddCreature(inventory.captured.front().data);
-        inventory.RemoveCreature(0);
+        auto removed = inventory.RemoveFromSlot(slotIndex);
+        if (!removed.has_value())
+            return false;
+        cauldron.AddCreature(removed->data);
         return true;
     }
 
@@ -132,7 +136,7 @@ struct CauldronSystem
 
         using EntityType = typename RegistryType::type;
         EntityType bestCauldron{};
-        float bestDist = std::numeric_limits<float>::max();
+        float bestDist = (std::numeric_limits<float>::max)();
         bool found     = false;
 
         for (auto& e : cauldrons)

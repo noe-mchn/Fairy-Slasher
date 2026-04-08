@@ -2,7 +2,8 @@
 
 #include "CreatureData.h"
 
-#include <vector>
+#include <array>
+#include <optional>
 #include <cstddef>
 
 /**
@@ -16,43 +17,71 @@ struct CapturedCreature
 /**
  * @brief ECS component that gives an entity a creature-capture inventory.
  *
- * Attach this to the player (or any entity that should carry creatures).
- * Limited to 4 slots shared between creatures and loot.
+ * Fixed 4-slot inventory. The player selects a slot with keys 1-4.
  */
 struct InventoryComponent
 {
-    std::vector<CapturedCreature> captured;
-    size_t maxCapacity = 4;
+    static constexpr size_t MAX_SLOTS = 4;
+    std::array<std::optional<CapturedCreature>, MAX_SLOTS> slots{};
+    int selectedSlot = 0;
 
-    bool IsFull() const { return captured.size() >= maxCapacity; }
-
-    bool AddCreature(const CreatureData& creatureData)
+    bool IsSlotEmpty(int index) const
     {
-        if (IsFull())
-            return false;
-        captured.push_back({ creatureData });
-        return true;
+        return index >= 0 && index < static_cast<int>(MAX_SLOTS) && !slots[index].has_value();
     }
 
-    bool RemoveCreature(size_t index)
+    bool IsFull() const
     {
-        if (index >= captured.size())
-            return false;
-        captured.erase(captured.begin() + static_cast<ptrdiff_t>(index));
+        for (auto& s : slots)
+            if (!s.has_value()) return false;
         return true;
     }
 
     /**
-     * @brief Releases the most recently captured creature, freeing a slot.
-     * @return true if a creature was released.
+     * @brief Adds a creature to the first empty slot.
+     * @return true if placed successfully.
      */
-    bool ReleaseLast()
+    bool AddCreature(const CreatureData& creatureData)
     {
-        if (captured.empty())
-            return false;
-        captured.pop_back();
-        return true;
+        for (size_t i = 0; i < MAX_SLOTS; ++i)
+        {
+            if (!slots[i].has_value())
+            {
+                slots[i] = CapturedCreature{ creatureData };
+                return true;
+            }
+        }
+        return false;
     }
 
-    size_t GetCount() const { return captured.size(); }
+    /**
+     * @brief Removes the creature from a specific slot.
+     * @return The removed creature, or std::nullopt if the slot was empty.
+     */
+    std::optional<CapturedCreature> RemoveFromSlot(int index)
+    {
+        if (index < 0 || index >= static_cast<int>(MAX_SLOTS) || !slots[index].has_value())
+            return std::nullopt;
+        auto creature = std::move(slots[index]);
+        slots[index].reset();
+        return creature;
+    }
+
+    /**
+     * @brief Returns the creature in the currently selected slot (or nullptr).
+     */
+    const CapturedCreature* GetSelected() const
+    {
+        if (selectedSlot >= 0 && selectedSlot < static_cast<int>(MAX_SLOTS) && slots[selectedSlot].has_value())
+            return &slots[selectedSlot].value();
+        return nullptr;
+    }
+
+    size_t GetCount() const
+    {
+        size_t n = 0;
+        for (auto& s : slots)
+            if (s.has_value()) ++n;
+        return n;
+    }
 };
