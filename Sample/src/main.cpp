@@ -279,9 +279,9 @@ int main(int argc, char** argv)
 
 		// here set the position in the virtual resolution
 		ui1.SetPos({ 870, 900 });
-		ui2.SetPos({ 915, 900 });
-		ui3.SetPos({ 960, 900 });
-		ui4.SetPos({ 1005, 900 });
+		ui2.SetPos({ 960, 900 });
+		ui3.SetPos({ 1040, 900 });
+		ui4.SetPos({ 1115, 900 });
 
 		//life bar components position
 		LifeBarComp0.SetPos({ 10, 10 });
@@ -307,10 +307,10 @@ int main(int argc, char** argv)
 		//EmptyHeartComp.SetPos({ 20, 0 });
 
 		// here the scale
-		ui1.SetScale({ 40,40 });
-		ui2.SetScale({ 40,40 });
-		ui3.SetScale({ 40,40 });
-		ui4.SetScale({ 40,40 });
+		ui1.SetScale({ 90,90 });
+		ui2.SetScale({ 90,90 });
+		ui3.SetScale({ 90,90 });
+		ui4.SetScale({ 90,90 });
 
 		//life bar components scale
 		LifeBarComp0.SetScale({ 400, 100 });
@@ -683,7 +683,7 @@ int main(int argc, char** argv)
 
 			// update UI to highlight selected slot
 			{
-				const glm::vec2 slotPositions[4] = { {870,900}, {915,900}, {960,900}, {1005,900} };
+				const glm::vec2 slotPositions[4] = { {790,900}, {885,900}, {975,900}, {1075,900} };
 				for (int s = 0; s < 4; ++s)
 				{
 					auto& u = getIdUi(ui, s, registry);
