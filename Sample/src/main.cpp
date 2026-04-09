@@ -23,6 +23,7 @@
 #include "CreatureAIComponent.h"
 #include "AISystem.h"
 #include "CaptureSystem.h"
+#include "OxygenGestion.h"
 #include "CauldronComponent.h"
 #include "CauldronSystem.h"
 #include "LootInventoryComponent.h"
@@ -224,6 +225,28 @@ int main(int argc, char** argv)
 		TransformComponent2d transform2;
 		TransformComponent2d transform3;
 		TransformComponent2d transform4;
+
+		//instanciation for the life bar
+		TransformComponent2d LifeBar0;
+		TransformComponent2d LifeBar1;
+		TransformComponent2d LifeBar2;
+		TransformComponent2d LifeBar3;
+		TransformComponent2d LifeBar4;
+		TransformComponent2d LifeBar5;
+		TransformComponent2d LifeBar6;
+		TransformComponent2d LifeBar7;
+		TransformComponent2d LifeBar8;
+		TransformComponent2d LifeBar9;
+		TransformComponent2d LifeBar10;
+		TransformComponent2d LifeBar11;
+		TransformComponent2d LifeBar12;
+		TransformComponent2d LifeBar13;
+		TransformComponent2d LifeBar14;
+		TransformComponent2d LifeBar15;
+		TransformComponent2d LifeBar16;
+
+		//TransformComponent2d LifeFullHeart;
+		//TransformComponent2d LifeEmptyHeart;
 		// here you can set a rotation ( ROTATION FROM THE CENTER OF THE MESH )
 		//transform.SetRotation(glm::radians(-45.0f));
 		// create your ui with a virtual resolution and an anchor default center
@@ -232,11 +255,56 @@ int main(int argc, char** argv)
 		UiComponent ui3({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent ui4({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 
+		//life bar components
+		UiComponent LifeBarComp0({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp1({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp2({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp3({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp4({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp5({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp6({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp7({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp8({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp9({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp10({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp11({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp12({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp13({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp14({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp15({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent LifeBarComp16({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+
+		//UiComponent FullHeartComp({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		//UiComponent EmptyHeartComp({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+
 		// here set the position in the virtual resolution
 		ui1.SetPos({ 870, 900 });
 		ui2.SetPos({ 915, 900 });
 		ui3.SetPos({ 960, 900 });
 		ui4.SetPos({ 1005, 900 });
+
+		//life bar components position
+		LifeBarComp0.SetPos({ 10, 10 });
+		LifeBarComp1.SetPos({ 10, 10 });
+		LifeBarComp2.SetPos({ 10, 10 });
+		LifeBarComp3.SetPos({ 10, 10 });
+		LifeBarComp4.SetPos({ 10, 10 });
+		LifeBarComp5.SetPos({ 10, 10 });
+		LifeBarComp6.SetPos({ 10, 10 });
+		LifeBarComp7.SetPos({ 10, 10 });
+		LifeBarComp8.SetPos({ 10, 10 });
+		LifeBarComp9.SetPos({ 10, 10 });
+		LifeBarComp10.SetPos({ 10, 10 });
+		LifeBarComp11.SetPos({ 10, 10 });
+		LifeBarComp12.SetPos({ 10, 10 });
+		LifeBarComp13.SetPos({ 10, 10 });
+		LifeBarComp14.SetPos({ 10, 10 });
+		LifeBarComp15.SetPos({ 10, 10 });
+		LifeBarComp16.SetPos({ 10, 10 });
+
+		
+		//FullHeartComp.SetPos({ 0, 0});
+		//EmptyHeartComp.SetPos({ 20, 0 });
 
 		// here the scale
 		ui1.SetScale({ 40,40 });
@@ -244,34 +312,153 @@ int main(int argc, char** argv)
 		ui3.SetScale({ 40,40 });
 		ui4.SetScale({ 40,40 });
 
+		//life bar components scale
+		LifeBarComp0.SetScale({ 400, 100 });
+		LifeBarComp1.SetScale({ 400, 100 });
+		LifeBarComp2.SetScale({ 400, 100 });
+		LifeBarComp3.SetScale({ 400, 100 });
+		LifeBarComp4.SetScale({ 400, 100 });
+		LifeBarComp5.SetScale({ 400, 100 });
+		LifeBarComp6.SetScale({ 400, 100 });
+		LifeBarComp7.SetScale({ 400, 100 });
+		LifeBarComp8.SetScale({ 400, 100 });
+		LifeBarComp9.SetScale({ 400, 100 });
+		LifeBarComp10.SetScale({ 400, 100 });
+		LifeBarComp11.SetScale({ 400, 100 });
+		LifeBarComp12.SetScale({ 400, 100 });
+		LifeBarComp13.SetScale({ 400, 100 });
+		LifeBarComp14.SetScale({ 400, 100 });
+		LifeBarComp15.SetScale({ 400, 100 });
+		LifeBarComp16.SetScale({ 400, 100 });
+
+		//FullHeartComp.SetScale({ 20, 20 });
+		//EmptyHeartComp.SetScale({ 20, 20 });
+
 		ui1.setId(0);
 		ui2.setId(1);
 		ui3.setId(2);
 		ui4.setId(3);
+		LifeBarComp0.setId(5);
+		LifeBarComp1.setId(6);
+		LifeBarComp2.setId(7);
+		LifeBarComp3.setId(8);
+		LifeBarComp4.setId(9);
+		LifeBarComp5.setId(10);
+		LifeBarComp6.setId(11);
+		LifeBarComp7.setId(12);
+		LifeBarComp8.setId(13);
+		LifeBarComp9.setId(14);
+		LifeBarComp10.setId(15);
+		LifeBarComp11.setId(16);
+		LifeBarComp12.setId(17);
+		LifeBarComp13.setId(18);
+		LifeBarComp14.setId(19);
+		LifeBarComp15.setId(20);
+		LifeBarComp16.setId(21);
 
+		//FullHeartComp.setId(4);
+		//EmptyHeartComp.setId(5);
+		ui1.ActivePrint();
+		ui2.ActivePrint();
+		ui3.ActivePrint();
+		ui4.ActivePrint();
 		// create a texture but be aware that only the first texture in the component will be use 
 		TextureComponent texture1;
 		TextureComponent texture2;
 		TextureComponent texture3;
 		TextureComponent texture4;
+		TextureComponent LifeBarTexture0;
+		TextureComponent LifeBarTexture1;
+		TextureComponent LifeBarTexture2;
+		TextureComponent LifeBarTexture3;
+		TextureComponent LifeBarTexture4;
+		TextureComponent LifeBarTexture5;
+		TextureComponent LifeBarTexture6;
+		TextureComponent LifeBarTexture7;
+		TextureComponent LifeBarTexture8;
+		TextureComponent LifeBarTexture9;
+		TextureComponent LifeBarTexture10;
+		TextureComponent LifeBarTexture11;
+		TextureComponent LifeBarTexture12;
+		TextureComponent LifeBarTexture13;
+		TextureComponent LifeBarTexture14;
+		TextureComponent LifeBarTexture15;
+		TextureComponent LifeBarTexture16;
+		//TextureComponent LifeEmpHeartText;
+		//TextureComponent LifefullHeartText;
 
-		texture1.texture =  &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
-		texture2.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
-		texture3.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
-		texture4.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+		texture1.texture =  &TextureLoader::Load("Textures/inventory/inventoryslot.png", window->App());
+		texture2.texture = &TextureLoader::Load("Textures/inventory/inventoryslot.png", window->App());
+		texture3.texture = &TextureLoader::Load("Textures/inventory/inventoryslot.png", window->App());
+		texture4.texture = &TextureLoader::Load("Textures/inventory/inventoryslot.png", window->App());
+		LifeBarTexture0.texture = &TextureLoader::Load("Textures/ui/health_bar1.png", window->App());
+		LifeBarTexture1.texture = &TextureLoader::Load("Textures/ui/health_bar2.png", window->App());
+		LifeBarTexture2.texture = &TextureLoader::Load("Textures/ui/health_bar3.png", window->App());
+		LifeBarTexture3.texture = &TextureLoader::Load("Textures/ui/health_bar4.png", window->App());
+		LifeBarTexture4.texture = &TextureLoader::Load("Textures/ui/health_bar5.png", window->App());
+		LifeBarTexture5.texture = &TextureLoader::Load("Textures/ui/health_bar6.png", window->App());
+		LifeBarTexture6.texture = &TextureLoader::Load("Textures/ui/health_bar7.png", window->App());
+		LifeBarTexture7.texture = &TextureLoader::Load("Textures/ui/health_bar8.png", window->App());
+		LifeBarTexture8.texture = &TextureLoader::Load("Textures/ui/health_bar9.png", window->App());
+		LifeBarTexture9.texture = &TextureLoader::Load("Textures/ui/health_bar10.png", window->App());
+		LifeBarTexture10.texture = &TextureLoader::Load("Textures/ui/health_bar11.png", window->App());
+		LifeBarTexture11.texture = &TextureLoader::Load("Textures/ui/health_bar12.png", window->App());
+		LifeBarTexture12.texture = &TextureLoader::Load("Textures/ui/health_bar13.png", window->App());
+		LifeBarTexture13.texture = &TextureLoader::Load("Textures/ui/health_bar14.png", window->App());
+		LifeBarTexture14.texture = &TextureLoader::Load("Textures/ui/health_bar15.png", window->App());
+		LifeBarTexture15.texture = &TextureLoader::Load("Textures/ui/health_bar16.png", window->App());
+		LifeBarTexture16.texture = &TextureLoader::Load("Textures/ui/health_bar17.png", window->App());
+		//LifeEmpHeartText.texture = &TextureLoader::Load("Textures/empty_heart", window->App());
+		//LifefullHeartText.texture = &TextureLoader::Load("Textures/full_heart", window->App());
 
 		
-		// same as always 
 		auto e1 = registry.CreateEntity();
 		auto e2 = registry.CreateEntity();
 		auto e3 = registry.CreateEntity();
 		auto e4 = registry.CreateEntity();
+		auto eLifeBar0 = registry.CreateEntity();
+		auto eLifeBar1 = registry.CreateEntity();
+		auto eLifeBar2 = registry.CreateEntity();
+		auto eLifeBar3 = registry.CreateEntity();
+		auto eLifeBar4 = registry.CreateEntity();
+		auto eLifeBar5 = registry.CreateEntity();
+		auto eLifeBar6 = registry.CreateEntity();
+		auto eLifeBar7 = registry.CreateEntity();
+		auto eLifeBar8 = registry.CreateEntity();
+		auto eLifeBar9 = registry.CreateEntity();
+		auto eLifeBar10 = registry.CreateEntity();
+		auto eLifeBar11 = registry.CreateEntity();
+		auto eLifeBar12 = registry.CreateEntity();
+		auto eLifeBar13 = registry.CreateEntity();
+		auto eLifeBar14 = registry.CreateEntity();
+		auto eLifeBar15 = registry.CreateEntity();
+		auto eLifeBar16 = registry.CreateEntity();
+		//auto emptyHeart = registry.CreateEntity();
+		//auto fullHeart = registry.CreateEntity();
 
 		registry.AddComponents(e1, std::move(transform1), std::move(ui1),std::move(texture1), std::move(CollisionComp2d{}));
 		registry.AddComponents(e2, std::move(transform2), std::move(ui2), std::move(texture2), std::move(CollisionComp2d{}));
 		registry.AddComponents(e3, std::move(transform3), std::move(ui3), std::move(texture3), std::move(CollisionComp2d{}));
 		registry.AddComponents(e4, std::move(transform4), std::move(ui4), std::move(texture4), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar0, std::move(LifeBar0), std::move(LifeBarComp0), std::move(LifeBarTexture0), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar1, std::move(LifeBar1), std::move(LifeBarComp1), std::move(LifeBarTexture1), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar2, std::move(LifeBar2), std::move(LifeBarComp2), std::move(LifeBarTexture2), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar3, std::move(LifeBar3), std::move(LifeBarComp3), std::move(LifeBarTexture3), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar5, std::move(LifeBar5), std::move(LifeBarComp5), std::move(LifeBarTexture5), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar6, std::move(LifeBar6), std::move(LifeBarComp6), std::move(LifeBarTexture6), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar7, std::move(LifeBar7), std::move(LifeBarComp7), std::move(LifeBarTexture7), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar8, std::move(LifeBar8), std::move(LifeBarComp8), std::move(LifeBarTexture8), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar9, std::move(LifeBar9), std::move(LifeBarComp9), std::move(LifeBarTexture9), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar10, std::move(LifeBar10), std::move(LifeBarComp10), std::move(LifeBarTexture10), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar11, std::move(LifeBar11), std::move(LifeBarComp11), std::move(LifeBarTexture11), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar12, std::move(LifeBar12), std::move(LifeBarComp12), std::move(LifeBarTexture12), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar13, std::move(LifeBar13), std::move(LifeBarComp13), std::move(LifeBarTexture13), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar14, std::move(LifeBar14), std::move(LifeBarComp14), std::move(LifeBarTexture14), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar15, std::move(LifeBar15), std::move(LifeBarComp15), std::move(LifeBarTexture15), std::move(CollisionComp2d{}));
+		registry.AddComponents(eLifeBar16, std::move(LifeBar16), std::move(LifeBarComp16), std::move(LifeBarTexture16), std::move(CollisionComp2d{}));
 
+		//registry.AddComponents(emptyHeart, std::move(LifeFullHeart), std::move(FullHeartComp), std::move(LifefullHeartText), std::move(CollisionComp2d{}));
+		//registry.AddComponents(fullHeart, std::move(LifeEmptyHeart), std::move(EmptyHeartComp), std::move(LifeEmpHeartText), std::move(CollisionComp2d{}));
 
 	}
 
@@ -434,6 +621,8 @@ int main(int argc, char** argv)
 	auto ui = registry.GetAllComponentsView<UiComponent>();
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+	KGR::Tools::Chrono<float> timer;
+	OxygenGestion oxygenGestion;
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -441,7 +630,16 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
-
+		oxygenGestion.update();
+		if (oxygenGestion.getLifetime() <= 0)
+			break;
+		for (auto& uiComp : ui) {
+			auto& oui = registry.GetComponent<UiComponent>(uiComp);
+			//if (oui.GetStatePrint() == true)
+				//oui.ActivePrint();
+			if (registry.GetComponent<UiComponent>(uiComp).GetStatePrint() != true)
+				oxygenGestion.getActiveUiComponent(oui);
+		}
 		{
 			auto input = window->GetInputManager();
 
