@@ -22,7 +22,7 @@
 #include "CreatureAIComponent.h"
 #include "AISystem.h"
 #include "CaptureSystem.h"
-#include "inventory.h"
+#include "OxygenGestion.h"
 
  //make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -73,7 +73,6 @@ int main(int argc, char** argv)
 	KGR::Audio::WavComponent sound;
 	sound.SetWav(KGR::Audio::WavManager::Load("Sounds/sound.mp3"));
 	sound.SetVolume(10.0f);
-	Inventory inventory;
 
 
 	// music test do not mind
@@ -155,6 +154,8 @@ int main(int argc, char** argv)
 		TransformComponent2d transform2;
 		TransformComponent2d transform3;
 		TransformComponent2d transform4;
+		TransformComponent2d LifeFullHeart;
+		TransformComponent2d LifeEmptyHeart;
 		// here you can set a rotation ( ROTATION FROM THE CENTER OF THE MESH )
 		//transform.SetRotation(glm::radians(-45.0f));
 		// create your ui with a virtual resolution and an anchor default center
@@ -162,47 +163,60 @@ int main(int argc, char** argv)
 		UiComponent ui2({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent ui3({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent ui4({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent FullHeartComp({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+		UiComponent EmptyHeartComp({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 
 		// here set the position in the virtual resolution
 		ui1.SetPos({ 870, 900 });
 		ui2.SetPos({ 915, 900 });
 		ui3.SetPos({ 960, 900 });
 		ui4.SetPos({ 1005, 900 });
+		FullHeartComp.SetPos({ 0, 0});
+		EmptyHeartComp.SetPos({ 20, 0 });
 
 		// here the scale
 		ui1.SetScale({ 40,40 });
 		ui2.SetScale({ 40,40 });
 		ui3.SetScale({ 40,40 });
 		ui4.SetScale({ 40,40 });
+		FullHeartComp.SetScale({ 20, 20 });
+		EmptyHeartComp.SetScale({ 20, 20 });
 
 		ui1.setId(0);
 		ui2.setId(1);
 		ui3.setId(2);
 		ui4.setId(3);
-
+		FullHeartComp.setId(4);
+		EmptyHeartComp.setId(5);
 		// create a texture but be aware that only the first texture in the component will be use 
 		TextureComponent texture1;
 		TextureComponent texture2;
 		TextureComponent texture3;
 		TextureComponent texture4;
+		TextureComponent LifeEmpHeartText;
+		TextureComponent LifefullHeartText;
 
 		texture1.texture =  &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
 		texture2.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
 		texture3.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
 		texture4.texture = &TextureLoader::Load("Textures/InventorySlot.jpg", window->App());
+		LifeEmpHeartText.texture = &TextureLoader::Load("Textures/empty_heart", window->App());
+		LifefullHeartText.texture = &TextureLoader::Load("Textures/full_heart", window->App());
 
 		
-		// same as always 
 		auto e1 = registry.CreateEntity();
 		auto e2 = registry.CreateEntity();
 		auto e3 = registry.CreateEntity();
 		auto e4 = registry.CreateEntity();
+		auto emptyHeart = registry.CreateEntity();
+		auto fullHeart = registry.CreateEntity();
 
 		registry.AddComponents(e1, std::move(transform1), std::move(ui1),std::move(texture1), std::move(CollisionComp2d{}));
 		registry.AddComponents(e2, std::move(transform2), std::move(ui2), std::move(texture2), std::move(CollisionComp2d{}));
 		registry.AddComponents(e3, std::move(transform3), std::move(ui3), std::move(texture3), std::move(CollisionComp2d{}));
 		registry.AddComponents(e4, std::move(transform4), std::move(ui4), std::move(texture4), std::move(CollisionComp2d{}));
-
+		registry.AddComponents(emptyHeart, std::move(LifeFullHeart), std::move(FullHeartComp), std::move(LifefullHeartText), std::move(CollisionComp2d{}));
+		registry.AddComponents(fullHeart, std::move(LifeEmptyHeart), std::move(EmptyHeartComp), std::move(LifeEmpHeartText), std::move(CollisionComp2d{}));
 
 	}
 
@@ -358,6 +372,8 @@ int main(int argc, char** argv)
 	auto ui = registry.GetAllComponentsView<UiComponent>();
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
+	KGR::Tools::Chrono<float> timer;
+	OxygenGestion oxygenGestion;
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -365,7 +381,9 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
-
+		oxygenGestion.update();
+		if (oxygenGestion.ExitStatus == -1)
+			break;
 		{
 			auto input = window->GetInputManager();
 
@@ -400,6 +418,9 @@ int main(int argc, char** argv)
 				pos.y += moveSpeed * dt;
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 				pos.y -= moveSpeed * dt;
+
+			if (input->IsKeyDown(KGR::Key::L))
+				oxygenGestion.resetOxygen();
 
 			if (input->IsKeyDown(KGR::Key::Num1)) {
 				auto& u = getIdUi(ui, 0, registry);
