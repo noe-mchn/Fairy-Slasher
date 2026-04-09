@@ -395,6 +395,8 @@ int main(int argc, char** argv)
 		}
 	}
 
+	auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
+
 	auto es = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
 	for (auto& e : es)
 	{
@@ -411,7 +413,6 @@ int main(int argc, char** argv)
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
 	float timer = 0.0f;
-
 
 	static float mouseSensitivity = 0.0025f;
 	float yaw = 0.0f;
@@ -452,7 +453,6 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
-
 		{
 			auto input = window->GetInputManager();
 
@@ -465,9 +465,10 @@ int main(int argc, char** argv)
 
 			pitch = std::clamp(pitch, glm::radians(-89.0f), glm::radians(89.0f));
 
+			glm::vec3 front;
+
 			player->SetRotation({ 0.0f, yaw, 0.0f });
 			transformCamera.SetRotation({ pitch, yaw, 0.0f });
-
 
 			if (input->IsKeyDown(KGR::SpecialKey::Shift))
 			{
@@ -704,50 +705,41 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+		auto mousePos = window.get()->GetInputManager()->GetMousePosition();
+		float aspectRatio = static_cast<float>(window->GetSize().x) / static_cast<float>(window->GetSize().y);
+		auto mouseinAR = UiComponent::VrToNdc(mousePos, window->GetSize(), aspectRatio, false);
+
+		auto es = registry.GetAllComponentsView<CollisionComp2d, UiComponent>();
+		for (auto e : es)
 		{
-			auto mousePos = window.get()->GetInputManager()->GetMousePosition();
-			float aspectRatio = static_cast<float>(window->GetSize().x) / static_cast<float>(window->GetSize().y);
-			auto mouseinAR = UiComponent::VrToNdc(mousePos, window->GetSize(), aspectRatio, false);
+			auto& t = registry.GetComponent<CollisionComp2d>(e);
+			auto& u = registry.GetComponent<UiComponent>(e);
+			t.Update(u.GetPosNdc(aspectRatio), u.GetScaleNdc(aspectRatio));
 
-			auto es = registry.GetAllComponentsView<CollisionComp2d, UiComponent>();
-			for (auto e : es)
-			{
-				auto& t = registry.GetComponent<CollisionComp2d>(e);
-				auto& u = registry.GetComponent<UiComponent>(e);
-				t.Update(u.GetPosNdc(aspectRatio), u.GetScaleNdc(aspectRatio));
-
-				if (t.aabb.IsColliding(mouseinAR))
-					u.SetColor({ 1,0,0,1 });
-				else
-					u.SetColor({ 0,1,0,1 });
-			}
-
-			transformCamera.SetPosition(player->playerTransform->GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
-
-			{
-				//for the hand to follow we will have to get the cams infos
-				glm::quat camRot = transformCamera.GetOrientation();
-				auto camPos = transformCamera.GetPosition();
-
-				glm::vec3 right = camRot * glm::vec3(1.0f, 0.0f, 0.0f);
-				glm::vec3 up = camRot * glm::vec3(0.0f, 1.0f, 0.0f);
-				glm::vec3 forward = camRot * glm::vec3(0.0f, 0.0f, -1.0f);
-
-				glm::vec3 localOffset = { 0.35f, 0.15f, 0.1f };
-
-				auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
-
-				glm::vec3 lanternPos =
-					camPos +
-					right * localOffset.x +
-					up * localOffset.y +
-					forward * localOffset.z;
-
-				lanternTransform.SetPosition(lanternPos);
-				lanternTransform.SetOrientation(camRot);
-			}
-
+			if (t.aabb.IsColliding(mouseinAR))
+				u.SetColor({ 1,0,0,1 });
+			else
+				u.SetColor({ 0,1,0,1 });
 		}
+		transformCamera.SetPosition(player->playerTransform->GetPosition() + glm::vec3{ 0.0f, 0.0f, 0.0f });
+
+		{
+			glm::quat camRot = transformCamera.GetRotation();
+			auto camPos = transformCamera.GetPosition();
+
+			glm::vec3 right = camRot * glm::vec3(1.0f, 0.0f, 0.0f);
+			glm::vec3 up = camRot * glm::vec3(0.0f, 1.0f, 0.0f);
+			glm::vec3 forward = camRot * glm::vec3(0.0f, 0.0f, -1.0f);
+
+			glm::vec3 localOffset = { 0.25f, -0.05f, 0.5f };
+
+			glm::vec3 lanternPos = camPos + right * localOffset.x + up * localOffset.y + forward * localOffset.z;
+
+			lanternTransform.SetPosition(lanternPos);
+			lanternTransform.SetOrientation(camRot);
+			
+		}
+
 		{
 			auto es = registry.GetAllComponentsView<CameraComponent, TransformComponent>();
 			if (es.size() != 1)
