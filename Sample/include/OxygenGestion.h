@@ -1,4 +1,5 @@
 #pragma once
+#include <Core/UiComponent.h>
 
 class OxygenGestion
 {
@@ -7,10 +8,13 @@ public:
 	~OxygenGestion() = default;
 	void update();
 	void resetOxygen();
+	int getIndex();
+	void getActiveUiComponent(UiComponent& ui);
+	int getLifetime() { return lifetime; }
 
-	int ExitStatus = 0; // 0 = alive, 1 = lose
 private:
-	float lifetime;
+	int lifetime;
+	int index;
 };
 
 

@@ -338,9 +338,30 @@ int main(int argc, char** argv)
 		ui2.setId(1);
 		ui3.setId(2);
 		ui4.setId(3);
+		LifeBarComp0.setId(5);
+		LifeBarComp1.setId(6);
+		LifeBarComp2.setId(7);
+		LifeBarComp3.setId(8);
+		LifeBarComp4.setId(9);
+		LifeBarComp5.setId(10);
+		LifeBarComp6.setId(11);
+		LifeBarComp7.setId(12);
+		LifeBarComp8.setId(13);
+		LifeBarComp9.setId(14);
+		LifeBarComp10.setId(15);
+		LifeBarComp11.setId(16);
+		LifeBarComp12.setId(17);
+		LifeBarComp13.setId(18);
+		LifeBarComp14.setId(19);
+		LifeBarComp15.setId(20);
+		LifeBarComp16.setId(21);
 
 		//FullHeartComp.setId(4);
 		//EmptyHeartComp.setId(5);
+		ui1.ActivePrint();
+		ui2.ActivePrint();
+		ui3.ActivePrint();
+		ui4.ActivePrint();
 		// create a texture but be aware that only the first texture in the component will be use 
 		TextureComponent texture1;
 		TextureComponent texture2;
@@ -610,8 +631,15 @@ int main(int argc, char** argv)
 		KGR::RenderWindow::PollEvent();
 		window->Update();
 		oxygenGestion.update();
-		if (oxygenGestion.ExitStatus == -1)
+		if (oxygenGestion.getLifetime() <= 0)
 			break;
+		for (auto& uiComp : ui) {
+			auto& oui = registry.GetComponent<UiComponent>(uiComp);
+			//if (oui.GetStatePrint() == true)
+				//oui.ActivePrint();
+			if (registry.GetComponent<UiComponent>(uiComp).GetStatePrint() != true)
+				oxygenGestion.getActiveUiComponent(oui);
+		}
 		{
 			auto input = window->GetInputManager();
 

@@ -1,33 +1,33 @@
 #include "OxygenGestion.h"
 #include <iostream>
-
+#include <vector>
+#include "Core/UiComponent.h"
 OxygenGestion::OxygenGestion()
 {
-	lifetime = 500.0f;
+	lifetime = 700.0f;
 }
 
 void OxygenGestion::resetOxygen() {
-	lifetime = 500.0f;
+	lifetime = 700.0f;
 }
 
 void OxygenGestion::update() 
 {
-	if (lifetime <= 0.0f) {
-		ExitStatus = -1;
-		return;
-	}
+    static int maxLifetime = 700;
+    static auto frameTime = (maxLifetime / 17);
+	index = lifetime / frameTime;
 	lifetime -= 1.0f;
-	printf("Oxygen lifetime: %f\n", lifetime);
-	if (lifetime <= 240.0f) {
-		//pass at 80 seconds of respiration change ui print.
-	}
-	if (lifetime <= 180.0f) {
-		//pass at 60 seconds of respiration change ui print.
-	}
-	if (lifetime <= 120.0f) {
-		//pass at 40 seconds of respiration change ui print.
-	}
-	if (lifetime <= 60.0f) {
-		//pass at 20 seconds of respiration change ui print.
-	}
+	printf(" oxygen :%d\n", index);
+}
+
+int OxygenGestion::getIndex()
+{
+    return index;
+}
+
+void OxygenGestion::getActiveUiComponent(UiComponent& ui)
+{
+	auto currentIndex = (17 - index) + 4;
+    if (ui.getId() == currentIndex)
+		ui.ActivePrint();
 }
