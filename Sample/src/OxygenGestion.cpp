@@ -3,11 +3,11 @@
 
 OxygenGestion::OxygenGestion()
 {
-	lifetime = 300.0f;
+	lifetime = 500.0f;
 }
 
 void OxygenGestion::resetOxygen() {
-	lifetime = 300.0f;
+	lifetime = 500.0f;
 }
 
 void OxygenGestion::update() 
