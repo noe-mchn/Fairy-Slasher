@@ -6,7 +6,7 @@ class OxygenGestion
 public:
 	OxygenGestion();
 	~OxygenGestion() = default;
-	void update();
+	void update(float dt);
 	void resetOxygen();
 	int getIndex();
 	void getActiveUiComponent(UiComponent& ui);

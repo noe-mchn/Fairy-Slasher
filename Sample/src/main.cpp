@@ -621,8 +621,8 @@ int main(int argc, char** argv)
 	auto ui = registry.GetAllComponentsView<UiComponent>();
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
-	KGR::Tools::Chrono<float> timer;
 	OxygenGestion oxygenGestion;
+	
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -630,13 +630,12 @@ int main(int argc, char** argv)
 		current = actual;
 		KGR::RenderWindow::PollEvent();
 		window->Update();
-		oxygenGestion.update();
+		oxygenGestion.update(dt);
 		if (oxygenGestion.getLifetime() <= 0)
 			break;
 		for (auto& uiComp : ui) {
 			auto& oui = registry.GetComponent<UiComponent>(uiComp);
-			//if (oui.GetStatePrint() == true)
-				//oui.ActivePrint();
+
 			if (registry.GetComponent<UiComponent>(uiComp).GetStatePrint() != true)
 				oxygenGestion.getActiveUiComponent(oui);
 		}
