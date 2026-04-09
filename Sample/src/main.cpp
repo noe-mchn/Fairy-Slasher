@@ -28,6 +28,7 @@
 #include "CauldronSystem.h"
 #include "LootInventoryComponent.h"
 #include "PlayerUpgradeComponent.h"
+#include "ObjMaterialHelper.h"
 
  //make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -97,44 +98,82 @@ int main(int argc, char** argv)
 	}
 
 	// lantern (held by player, attached to camera)
-	std::uint64_t lanternEntity = 0;
+	//std::uint64_t lanternEntity = 0;
+	//{
+	//	MeshComponent mesh;
+	//	mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
+
+	//	MaterialComponent mat;
+	//	mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+	//	for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+	//	{
+	//		Material m;
+	//		m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+	//		mat.materials[i] = m;
+	//	}
+
+	//	TransformComponent transform;
+	//	transform.SetScale({ 0.15f, 0.15f, 0.15f });
+
+	//	lanternEntity = registry.CreateEntity();
+	//	registry.AddComponents(lanternEntity, std::move(mesh), std::move(mat), std::move(transform));
+	//}
+
+	// map
 	{
 		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
+		mesh.mesh = &MeshLoader::Load("Models/map.obj", window->App());
+
+		// Parse the .mtl referenced by the .obj to get the correct texture per sub-mesh
+		auto matInfos = GetObjMaterials("Models/map.obj", projectRoot / "Ressources");
+
+		// Override textures for shapes that have no texture in the .mtl
+		for (auto& info : matInfos)
+		{
+			if (info.diffuseTexturePath.empty())
+			{
+				if (info.shapeName.find("lvl_floor") != std::string::npos ||
+					info.shapeName.find("player_height") != std::string::npos ||
+					info.shapeName.find("Plane") != std::string::npos)
+					info.diffuseTexturePath = "Textures/herbe.png";
+				else if (info.shapeName.find("limite") != std::string::npos)
+					info.diffuseTexturePath = "Textures/mursombre.png";
+				else if (info.shapeName.find("transition_rock") != std::string::npos ||
+						 info.shapeName.find("Sphere") != std::string::npos)
+					info.diffuseTexturePath = "Textures/cailloux.png";
+				else if (info.shapeName.find("dryad_placeholder") != std::string::npos ||
+						 info.shapeName.find("fairy_placeholder") != std::string::npos)
+					info.diffuseTexturePath = "Textures/mousse.png";
+			}
+		}
+
+		// Fix: background material Spheres/Cube/Cylinder have foret.png from .mtl but aren't background planes
+		for (auto& info : matInfos)
+		{
+			if (info.shapeName.find("Sphere") != std::string::npos &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+			if (info.shapeName == "Cube" &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+			if (info.shapeName == "Cylinder" &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+		}
 
 		MaterialComponent mat;
 		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
 		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
 		{
 			Material m;
-			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+			if (i < static_cast<int>(matInfos.size()) && !matInfos[i].diffuseTexturePath.empty())
+				m.baseColor = &TextureLoader::Load(matInfos[i].diffuseTexturePath, window->App());
 			mat.materials[i] = m;
 		}
 
 		TransformComponent transform;
-		transform.SetScale({ 0.15f, 0.15f, 0.15f });
-
-		lanternEntity = registry.CreateEntity();
-		registry.AddComponents(lanternEntity, std::move(mesh), std::move(mat), std::move(transform));
-	}
-
-	// ground plane
-	{
-		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
-
-		MaterialComponent mat;
-		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
-		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
-		{
-			Material m;
-			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
-			mat.materials[i] = m;
-		}
-
-		TransformComponent transform;
-		transform.SetPosition({ 0, -0.5f, 0 });
-		transform.SetScale({ 50.0f, 0.5f, 50.0f });
+		transform.SetPosition({ 0, 0, 0 });
+		transform.SetScale({ 1.0f, 1.0f, 1.0f });
 
 		auto e = registry.CreateEntity();
 		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform));
@@ -142,8 +181,9 @@ int main(int argc, char** argv)
 
 	// light
 	{
-		// directional light so the whole scene is illuminated
-		LightComponent<LightData::Type::Directional> lc = LightComponent<LightData::Type::Directional>::Create({ 1, 1,1 }, { 1,1,1 }, 100.0f);
+		// directional sun – subtle purple moonlight (from Blender, toned down)
+		glm::vec3 sunColor = glm::vec3(0.3f, 0.1f, 0.55f);
+		LightComponent<LightData::Type::Directional> lc = LightComponent<LightData::Type::Directional>::Create(sunColor, sunColor, 100.0f);
 		TransformComponent transform;
 		transform.SetPosition({ 0,5,0 });
 		transform.LookAtDir({ -0.2f,-1,- 0.3f });
@@ -713,13 +753,13 @@ int main(int argc, char** argv)
 			camTransform.SetPosition(pos);
 			camTransform.LookAtDir(cameraFront);
 
-			// update lantern to follow camera (FPS arm)
-			{
-				auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
-				glm::vec3 lanternPos = pos + cameraFront * 0.35f + cameraRight * 0.15f - cameraUp * 0.1f;
-				lanternTransform.SetPosition(lanternPos);
-				lanternTransform.LookAtDir(cameraFront);
-			}
+			//// update lantern to follow camera (FPS arm)
+			//{
+			//	auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
+			//	glm::vec3 lanternPos = pos + cameraFront * 0.35f + cameraRight * 0.15f - cameraUp * 0.1f;
+			//	lanternTransform.SetPosition(lanternPos);
+			//	lanternTransform.LookAtDir(cameraFront);
+			//}
 
 			std::uint64_t nearestCreature{};
 			bool creatureInRange = CaptureSystem::FindNearest(registry, cameraEntity, captureRange, nearestCreature);
