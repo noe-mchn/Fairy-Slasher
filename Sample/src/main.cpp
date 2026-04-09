@@ -26,6 +26,7 @@
 #include "LootInventoryComponent.h"
 #include "PlayerUpgradeComponent.h"
 #include <PlayerComponent.h>
+#include "ObjMaterialHelper.h"
 
  //make you ecs type with entity 8 / 16 / 32 / 64 and the size of allocation between 1 and infinity
 using ecsType = KGR::ECS::Registry<KGR::ECS::Entity::_64, 100>;
@@ -98,45 +99,84 @@ int main(int argc, char** argv)
 		registry.AddComponents(cameraEntity, std::move(cam), std::move(transform), InventoryComponent{}, LootInventoryComponent{}, PlayerUpgradeComponent{});
 	}
 
-	// lantern (held by player, attached to camera)
-	std::uint64_t lanternEntity = 0;
+	// hand
+	std::uint64_t handEntity = 0;
 	{
-		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
+	MeshComponent mesh;
+	mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
 
-		MaterialComponent mat;
-		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
-		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
-		{
-			Material m;
-			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
-			mat.materials[i] = m;
-		}
-
-		TransformComponent transform;
-		transform.SetScale({ 0.15f, 0.15f, 0.15f });
-
-		lanternEntity = registry.CreateEntity();
-		registry.AddComponents(lanternEntity, std::move(mesh), std::move(mat), std::move(transform));
+	MaterialComponent mat;
+	 
+	mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+	for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+	{
+	Material m;
+	m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+	mat.materials[i] = m;
 	}
 
-	// ground plane
+	TransformComponent transform;
+	transform.SetScale({ 0.15f, 0.15f, 0.15f });
+
+	handEntity = registry.CreateEntity();
+	registry.AddComponents(handEntity, std::move(mesh), std::move(mat), std::move(transform));
+	}
+
+	// map
 	{
 		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
+		mesh.mesh = &MeshLoader::Load("Models/map.obj", window->App());
+
+		// Parse the .mtl referenced by the .obj to get the correct texture per sub-mesh
+		auto matInfos = GetObjMaterials("Models/map.obj", projectRoot / "Ressources");
+
+		// Override textures for shapes that have no texture in the .mtl
+		for (auto& info : matInfos)
+		{
+			if (info.diffuseTexturePath.empty())
+			{
+				if (info.shapeName.find("lvl_floor") != std::string::npos ||
+					info.shapeName.find("player_height") != std::string::npos ||
+					info.shapeName.find("Plane") != std::string::npos)
+					info.diffuseTexturePath = "Textures/herbe.png";
+				else if (info.shapeName.find("limite") != std::string::npos)
+					info.diffuseTexturePath = "Textures/mursombre.png";
+				else if (info.shapeName.find("transition_rock") != std::string::npos ||
+						 info.shapeName.find("Sphere") != std::string::npos)
+					info.diffuseTexturePath = "Textures/cailloux.png";
+				else if (info.shapeName.find("dryad_placeholder") != std::string::npos ||
+						 info.shapeName.find("fairy_placeholder") != std::string::npos)
+					info.diffuseTexturePath = "Textures/mousse.png";
+			}
+		}
+
+		// Fix: background material Spheres/Cube/Cylinder have foret.png from .mtl but aren't background planes
+		for (auto& info : matInfos)
+		{
+			if (info.shapeName.find("Sphere") != std::string::npos &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+			if (info.shapeName == "Cube" &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+			if (info.shapeName == "Cylinder" &&
+				info.diffuseTexturePath.find("foret") != std::string::npos)
+				info.diffuseTexturePath = "Textures/cailloux.png";
+		}
 
 		MaterialComponent mat;
 		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
 		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
 		{
 			Material m;
-			m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+			if (i < static_cast<int>(matInfos.size()) && !matInfos[i].diffuseTexturePath.empty())
+				m.baseColor = &TextureLoader::Load(matInfos[i].diffuseTexturePath, window->App());
 			mat.materials[i] = m;
 		}
 
 		TransformComponent transform;
-		transform.SetPosition({ 0, -0.5f, 0 });
-		transform.SetScale({ 50.0f, 0.5f, 50.0f });
+		transform.SetPosition({ 0, 0, 0 });
+		transform.SetScale({ 1.0f, 1.0f, 1.0f });
 
 		auto e = registry.CreateEntity();
 		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform));
@@ -144,8 +184,9 @@ int main(int argc, char** argv)
 
 	// light
 	{
-		// directional light so the whole scene is illuminated
-		LightComponent<LightData::Type::Directional> lc = LightComponent<LightData::Type::Directional>::Create({ 1, 1,1 }, { 1,1,1 }, 100.0f);
+		// directional sun – subtle purple moonlight (from Blender, toned down)
+		glm::vec3 sunColor = glm::vec3(0.3f, 0.1f, 0.55f);
+		LightComponent<LightData::Type::Directional> lc = LightComponent<LightData::Type::Directional>::Create(sunColor, sunColor, 100.0f);
 		TransformComponent transform;
 		transform.SetPosition({ 0,5,0 });
 		transform.LookAtDir({ -0.2f,-1,- 0.3f });
@@ -339,31 +380,9 @@ int main(int argc, char** argv)
 		registry.AddComponents(e, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
 	}
 
-	//Hand mesh
-	{
-		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/MAIN2.obj", window->App());
-
-		MaterialComponent mat;
-		mat.materials.resize(mesh.mesh->GetSubMeshesCount());
-		for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
-		{
-			Material m;
-			m.baseColor = &TextureLoader::Load("Textures/test_mat_e.png", window->App());
-			mat.materials[i] = m;
-		}
-
-		TransformComponent transform;
-		transform.SetPosition({ 0, -100, 0 });
-		transform.SetScale({ 0.3f, 1.0f, 0.25f });
-
-		auto e = registry.CreateEntity();
-		registry.AddComponents(e, std::move(mesh), /*std::move(mat),*/ std::move(transform));
-	}
-
 	//Player
 	{
-		// A player needs : a Mesh, a Cam, a Transform
+		// A player needs : a Mesh, a mat, a Transform
 		MeshComponent mesh;
 		mesh.mesh = &MeshLoader::Load("Models/cube.obj", window->App());
 
@@ -389,13 +408,13 @@ int main(int argc, char** argv)
 
 	PlayerComponent* player = nullptr;
 	{
-		auto es = registry.GetAllComponentsView<PlayerComponent, TransformComponent>();
+		auto es = registry.GetAllComponentsView<PlayerComponent, TransformComponent, MeshComponent, MaterialComponent>();
 		for (auto& e : es) {
 			player = &registry.GetComponent<PlayerComponent>(e);
 		}
 	}
 
-	auto& lanternTransform = registry.GetComponent<TransformComponent>(lanternEntity);
+	auto& handTransform = registry.GetComponent<TransformComponent>(handEntity);
 
 	auto es = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
 	for (auto& e : es)
@@ -419,8 +438,8 @@ int main(int argc, char** argv)
 	float pitch = glm::radians(-10.0f);
 
 	//get camera
-	auto mainCamera = registry.GetAllComponentsView<CameraComponent, TransformComponent>().begin()[0];
-	auto& transformCamera = registry.GetComponent<TransformComponent>(mainCamera);
+	auto& mainCamera = registry.GetComponent<CameraComponent>(cameraEntity);
+	auto& transformCamera = registry.GetComponent<TransformComponent>(cameraEntity);
 
 	assert(player != nullptr && "Player component not found!");
 
@@ -735,8 +754,8 @@ int main(int argc, char** argv)
 
 			glm::vec3 lanternPos = camPos + right * localOffset.x + up * localOffset.y + forward * localOffset.z;
 
-			lanternTransform.SetPosition(lanternPos);
-			lanternTransform.SetOrientation(camRot);
+			handTransform.SetPosition(lanternPos);
+			handTransform.SetOrientation(camRot);
 			
 		}
 
