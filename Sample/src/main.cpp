@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 	// map
 	{
 		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/map.obj", window->App());
+		mesh.mesh = &MeshLoader::Load("Models/map2.obj", window->App());
 
 		// Parse the .mtl referenced by the .obj to get the correct texture per sub-mesh
 		auto matInfos = GetObjMaterials("Models/map.obj", projectRoot / "Ressources");
