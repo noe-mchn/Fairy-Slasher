@@ -130,7 +130,7 @@ float4 fragMain(VSOutput vertIn) : SV_TARGET {
         discard;
 
 
-    result += baseColor * (1 - metalness) * oclusion * 0.02f;
+    result += baseColor * (1 - metalness) * oclusion * 0.15f;
 
     for (int i = 0; i < lightCount; ++i)
     {
@@ -189,12 +189,13 @@ float4 fragMain(VSOutput vertIn) : SV_TARGET {
             // shiny
             float Ns = 1.0f/pow(roughness,2.0f);
 			
-            float3 diffuse = max(dot(N, -lightDir), 0.0);
+            float NdotL = max(dot(N, -lightDir), 0.0);
+            float3 diffuse = NdotL * 0.7f + 0.3f;
             float3 specular = Ks * pow(max(dot(N, H), 0.0f), Ns);
             float3 Fr = (Kd * 1.0f/3.14159265f) +  specular;
             float3 Ej = diffuse;
-			
-			
+
+
              result += (Fr * Ej) * lightColor ;
         }
         // spot Light
