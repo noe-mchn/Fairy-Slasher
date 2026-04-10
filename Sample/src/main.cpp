@@ -62,18 +62,12 @@ int main(int argc, char** argv)
 	// create your ecs 
 	ecsType registry = ecsType{};
 
-
-	// This is how to use the sounds and music system
-	// and place it somewhere in the code where you want to use it
-
-	// TODO when all test ok move this into a proper place 
-
 	//MUSICS
 	KGR::Audio::WavStreamComponent::Init();
 
 	KGR::Audio::WavStreamComponent music;
 	music.SetWav(KGR::Audio::WavStreamManager::Load("Musics/Galvanic_Haloclaw.mp3"));
-	music.SetVolume(10.0f);
+	music.SetVolume(12.0f);
 
 	//SOUNDS
 	KGR::Audio::WavComponent::Init();
@@ -81,9 +75,6 @@ int main(int argc, char** argv)
 	KGR::Audio::WavComponent sound;
 	sound.SetWav(KGR::Audio::WavManager::Load("Sounds/sound.mp3"));
 	sound.SetVolume(10.0f);
-
-
-	// music test do not mind
 
 	// camera 
 	std::uint64_t cameraEntity = 0;
@@ -1117,11 +1108,8 @@ int main(int argc, char** argv)
 			if (upgrades.nightVision)
 				clearColor = { 0.1f, 0.4f, 0.15f, 1.0f };
 		}
-		//if (music.IsOver())
-
 		window->Render(clearColor);
 	}
-	//music.Stop();
 	window->Destroy();
 	KGR::RenderWindow::End();
 }
