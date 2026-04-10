@@ -143,7 +143,7 @@ struct IGameScene : public Scene
 				m_window->RegisterText(ui, transform, text);
 			}
 		}
-		m_window->Render({ 0.53f, 0.81f, 0.92f, 1.0f });
+		m_window->Render({ 0.576f, 0.318f, 1.0f, 1.0f });
 	}
 protected:
 	ecsType m_ecs;
