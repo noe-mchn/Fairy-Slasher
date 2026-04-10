@@ -98,6 +98,7 @@ void KGR::RenderWindow::RegisterRender(MeshComponent& mesh, TransformComponent& 
 void KGR::RenderWindow::RegisterUi(UiComponent& component, TransformComponent2d& transform, TextureComponent& texture)
 {
 	if (component.GetStatePrint() == true) {
+		printf("%d\n", component.getId());
 		float aspectRatio = static_cast<float>(GetSize().x) / static_cast<float>(GetSize().y);
 		transform.SetPosition(component.GetPosNdc(aspectRatio));
 		transform.SetScale(component.GetScaleNdc(aspectRatio));
