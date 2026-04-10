@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <PlayerComponent.h>
 
 struct CreatureData;
 class TransformComponent;
@@ -17,6 +18,9 @@ struct AIContext
     std::vector<glm::vec3> patrolPoints;
     int currentPatrolIndex = 0;
     float waitTimer = 0.0f;
+    float respirationTimer = 0.0f;
+    bool isAlive = true;
+	PlayerComponent* player = nullptr;
 };
 
 class IdleState : public IState

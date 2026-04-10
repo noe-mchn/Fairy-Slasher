@@ -15,11 +15,12 @@ struct CreatureAIComponent
     std::unique_ptr<StateMachine> stateMachine;
     bool initialized = false;
 
-    void Init(TransformComponent* selfTransform, TransformComponent* playerTransform, std::vector<glm::vec3> patrolPts = {})
+    void Init(TransformComponent* selfTransform, PlayerComponent* player,std::vector<glm::vec3> patrolPts = {})
     {
         context.data = &data;
         context.transform = selfTransform;
-        context.playerTransform = playerTransform;
+        context.playerTransform = player->playerTransform;
+        context.player = player;
         context.patrolPoints = std::move(patrolPts);
         context.currentPatrolIndex = 0;
         context.waitTimer = 0.0f;
