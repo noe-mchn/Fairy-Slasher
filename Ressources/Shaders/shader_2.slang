@@ -100,7 +100,7 @@ ConstantBuffer<Sampler2D> emissiveSampler;
 [[vk::binding(0, 5)]]
 ConstantBuffer<Sampler2D> normalSampler;
 
-static const float3 fogColor = pow(float3(0.53f, 0.81f, 0.92f), 2.2f);
+static const float3 fogColor = pow(float3(0.576f, 0.318f, 1.0f), 2.2f);
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET {

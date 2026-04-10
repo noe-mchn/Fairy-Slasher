@@ -117,10 +117,10 @@ int main(int argc, char** argv)
 	// map
 	{
 		MeshComponent mesh;
-		mesh.mesh = &MeshLoader::Load("Models/map2.obj", window->App());
+		mesh.mesh = &MeshLoader::Load("Models/map_finale.obj", window->App());
 
 		// Parse the .mtl referenced by the .obj to get the correct texture per sub-mesh
-		auto matInfos = GetObjMaterials("Models/map2.obj", projectRoot / "Ressources");
+		auto matInfos = GetObjMaterials("Models/map_finale.mtl", projectRoot / "Ressources");
 
 		// Override textures for shapes that have no texture in the .mtl
 		for (auto& info : matInfos)
