@@ -615,11 +615,6 @@ int main(int argc, char** argv)
 	float captureDuration = 1.5f;
 	float captureRange = 2.5f;
 
-	auto ui = registry.GetAllComponentsView<UiComponent>();
-	float current = 0.0f;
-	KGR::Tools::Chrono<float> chrono;
-	float timer = 0.0f;
-
 	static float mouseSensitivity = 0.0025f;
 	float yaw = 0.0f;
 	float pitch = glm::radians(-10.0f);
@@ -658,7 +653,7 @@ int main(int argc, char** argv)
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
 	OxygenGestion oxygenGestion;
-	
+	float timer = 0.0f;
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
