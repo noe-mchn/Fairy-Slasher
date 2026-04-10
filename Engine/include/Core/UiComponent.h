@@ -112,6 +112,10 @@ struct UiComponent
     /** @brief Gets the color of the UI element (RGBA). */
     glm::vec4 GetColor() const;
 
+    void ActivePrint() { isPrintable = !isPrintable; }
+
+    bool GetStatePrint() { return isPrintable; }
+
 private:
     /**
      * @brief Applies an offset based on the anchor to adjust the position.
@@ -123,6 +127,7 @@ private:
     static glm::vec2 applyOffSet(const glm::vec2& pos, const glm::vec2& scale, Anchor anchor);
 
     int id;
+    bool isPrintable = false;
     glm::vec2 m_virtualRes = { 1920,1080 }; /**< Virtual resolution (width, height) of the UI context */
     glm::vec2 m_pos = { 0,0 };              /**< Position in virtual resolution coordinates */
     glm::vec2 m_scale = { 1,1 };            /**< Scale of the UI element */

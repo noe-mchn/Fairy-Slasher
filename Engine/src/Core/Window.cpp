@@ -97,14 +97,16 @@ void KGR::RenderWindow::RegisterRender(MeshComponent& mesh, TransformComponent& 
 
 void KGR::RenderWindow::RegisterUi(UiComponent& component, TransformComponent2d& transform, TextureComponent& texture)
 {
-	float aspectRatio = static_cast<float>(GetSize().x) / static_cast<float>(GetSize().y);
-	transform.SetPosition(component.GetPosNdc(aspectRatio));
-	transform.SetScale(component.GetScaleNdc(aspectRatio));
+	if (component.GetStatePrint() == true) {
+		float aspectRatio = static_cast<float>(GetSize().x) / static_cast<float>(GetSize().y);
+		transform.SetPosition(component.GetPosNdc(aspectRatio));
+		transform.SetScale(component.GetScaleNdc(aspectRatio));
 
-	if (!texture.texture)
-		texture.texture = &TextureLoader::Load("Textures/Base/base_color.png", App());
+		if (!texture.texture)
+			texture.texture = &TextureLoader::Load("Textures/Base/base_color.png", App());
 
-	m_core.RegisterUi(UiData{ component.GetColor(),transform.GetFullTransform() }, texture.texture, GetSize(),&TextureLoader::Load("Textures/Base/white.png", &m_core));
+		m_core.RegisterUi(UiData{ component.GetColor(),transform.GetFullTransform() }, texture.texture, GetSize(), &TextureLoader::Load("Textures/Base/white.png", &m_core));
+	}
 }
 
 void KGR::RenderWindow::RegisterText(UiComponent& component, TransformComponent2d& transform, TextComp& texture)
