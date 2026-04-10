@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 	KGR::Audio::WavStreamComponent::Init();
 
 	KGR::Audio::WavStreamComponent music;
-	music.SetWav(KGR::Audio::WavStreamManager::Load("Musics/test.mp3"));
+	music.SetWav(KGR::Audio::WavStreamManager::Load("Musics/Galvanic_Haloclaw.mp3"));
 	music.SetVolume(10.0f);
 
 	//SOUNDS
@@ -101,27 +101,27 @@ int main(int argc, char** argv)
 	}
 
 	// hand
-	std::uint64_t handEntity = 0;
-	{
-	MeshComponent mesh;
-	mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
+	//std::uint64_t handEntity = 0;
+	//{
+	//	MeshComponent mesh;
+	//	mesh.mesh = &MeshLoader::Load("Models/lanterne.obj", window->App());
 
-	MaterialComponent mat;
-	 
-	mat.materials.resize(mesh.mesh->GetSubMeshesCount());
-	for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
-	{
-	Material m;
-	m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
-	mat.materials[i] = m;
-	}
+	//	MaterialComponent mat;
+	// 
+	//	mat.materials.resize(mesh.mesh->GetSubMeshesCount());
+	//	for (int i = 0; i < mesh.mesh->GetSubMeshesCount(); ++i)
+	//	{
+	//	Material m;
+	//	m.baseColor = &TextureLoader::Load("Textures/test_mat_bc.png", window->App());
+	//	mat.materials[i] = m;
+	//	}
 
-	TransformComponent transform;
-	transform.SetScale({ 0.15f, 0.15f, 0.15f });
+	//	TransformComponent transform;
+	//	transform.SetScale({ 0.15f, 0.15f, 0.15f });
 
-	handEntity = registry.CreateEntity();
-	registry.AddComponents(handEntity, std::move(mesh), std::move(mat), std::move(transform));
-	}
+	//	handEntity = registry.CreateEntity();
+	//	registry.AddComponents(handEntity, std::move(mesh), std::move(mat), std::move(transform));
+	//}
 
 	// map
 	{
@@ -601,7 +601,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	auto& handTransform = registry.GetComponent<TransformComponent>(handEntity);
+	//auto& handTransform = registry.GetComponent<TransformComponent>(handEntity);
 
 	auto es = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
 	for (auto& e : es)
@@ -647,13 +647,14 @@ int main(int argc, char** argv)
 		cameraUp = glm::normalize(glm::cross(cameraRight, cameraFront));
 	}
 
-
-
 	auto ui = registry.GetAllComponentsView<UiComponent>();
 	float current = 0.0f;
 	KGR::Tools::Chrono<float> chrono;
 	OxygenGestion oxygenGestion;
 	float timer = 0.0f;
+
+	music.SetLoop(true);
+	music.Play();
 	while (!window->ShouldClose())
 	{
 		float actual = chrono.GetElapsedTime().AsSeconds();
@@ -952,8 +953,8 @@ int main(int argc, char** argv)
 
 			glm::vec3 lanternPos = camPos + right * localOffset.x + up * localOffset.y + forward * localOffset.z;
 
-			handTransform.SetPosition(lanternPos);
-			handTransform.SetOrientation(camRot);
+			//handTransform.SetPosition(lanternPos);
+			//handTransform.SetOrientation(camRot);
 			
 		}
 
@@ -1083,8 +1084,6 @@ int main(int argc, char** argv)
 
 
 		//Test Sound
-		if (window->GetInputManager()->IsKeyPressed(KGR::Key::P))
-			sound.Play();
 		{
 			auto es = registry.GetAllComponentsView<LightComponent<LightData::Type::Point>, TransformComponent>();
 			for (auto& e : es)
@@ -1118,8 +1117,11 @@ int main(int argc, char** argv)
 			if (upgrades.nightVision)
 				clearColor = { 0.1f, 0.4f, 0.15f, 1.0f };
 		}
+		//if (music.IsOver())
+
 		window->Render(clearColor);
 	}
+	//music.Stop();
 	window->Destroy();
 	KGR::RenderWindow::End();
 }
