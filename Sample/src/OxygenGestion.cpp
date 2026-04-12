@@ -13,8 +13,8 @@ void OxygenGestion::resetOxygen() {
 
 void OxygenGestion::update(float dt) 
 {
-    static int maxLifetime = 50000;
-    static auto frameTime = (maxLifetime / 17);
+	static int maxLifetime = 50000;
+	static auto frameTime = (maxLifetime / 17);
 	index = lifetime / frameTime;
 	lifetime -= 1.0f * dt;
 }

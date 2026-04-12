@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <algorithm>
 #include <cstdlib>
 #include <random>
@@ -205,6 +205,8 @@ int main(int argc, char** argv)
 		TransformComponent2d LifeBar15;
 		TransformComponent2d LifeBar16;
 
+		TransformComponent2d GameOverScreen;
+
 		UiComponent ui1({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent ui2({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent ui3({ 1920,1080 }, UiComponent::Anchor::LeftTop);
@@ -228,6 +230,8 @@ int main(int argc, char** argv)
 		UiComponent LifeBarComp14({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent LifeBarComp15({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 		UiComponent LifeBarComp16({ 1920,1080 }, UiComponent::Anchor::LeftTop);
+
+		UiComponent GameOverComp({ 1920,1080 }, UiComponent::Anchor::LeftTop);
 
 		// here set the position in the virtual resolution
 		ui1.SetPos({ 870, 900 });
@@ -254,6 +258,7 @@ int main(int argc, char** argv)
 		LifeBarComp15.SetPos({ 10, 10 });
 		LifeBarComp16.SetPos({ 10, 10 });
 
+		GameOverComp.SetPos({ 700, 230 });
 
 		// here the scale
 		ui1.SetScale({ 90,90 });
@@ -280,6 +285,8 @@ int main(int argc, char** argv)
 		LifeBarComp15.SetScale({ 400, 100 });
 		LifeBarComp16.SetScale({ 400, 100 });
 
+		GameOverComp.SetScale({ 600,600 });
+
 		ui1.setId(0);
 		ui2.setId(1);
 		ui3.setId(2);
@@ -301,6 +308,9 @@ int main(int argc, char** argv)
 		LifeBarComp14.setId(19);
 		LifeBarComp15.setId(20);
 		LifeBarComp16.setId(21);
+
+		GameOverComp.setId(22);
+
 		ui1.ActivePrint();
 		ui2.ActivePrint();
 		ui3.ActivePrint();
@@ -327,6 +337,9 @@ int main(int argc, char** argv)
 		TextureComponent LifeBarTexture14;
 		TextureComponent LifeBarTexture15;
 		TextureComponent LifeBarTexture16;
+
+		TextureComponent GameOverTexture;
+
 		texture1.texture = &TextureLoader::Load("Textures/inventoryslot.png", window->App());
 		texture2.texture = &TextureLoader::Load("Textures/inventoryslot.png", window->App());
 		texture3.texture = &TextureLoader::Load("Textures/inventoryslot.png", window->App());
@@ -348,6 +361,8 @@ int main(int argc, char** argv)
 		LifeBarTexture14.texture = &TextureLoader::Load("Textures/ui/health_bar15.png", window->App());
 		LifeBarTexture15.texture = &TextureLoader::Load("Textures/ui/health_bar16.png", window->App());
 		LifeBarTexture16.texture = &TextureLoader::Load("Textures/ui/health_bar17.png", window->App());
+		GameOverTexture.texture = &TextureLoader::Load("Textures/ui/game_over_title.png", window->App());
+
 		auto e1 = registry.CreateEntity();
 		auto e2 = registry.CreateEntity();
 		auto e3 = registry.CreateEntity();
@@ -369,6 +384,8 @@ int main(int argc, char** argv)
 		auto eLifeBar14 = registry.CreateEntity();
 		auto eLifeBar15 = registry.CreateEntity();
 		auto eLifeBar16 = registry.CreateEntity();
+		auto eGameOver = registry.CreateEntity();
+
 		registry.AddComponents(e1, std::move(transform1), std::move(ui1), std::move(texture1), std::move(CollisionComp2d{}));
 		registry.AddComponents(e2, std::move(transform2), std::move(ui2), std::move(texture2), std::move(CollisionComp2d{}));
 		registry.AddComponents(e3, std::move(transform3), std::move(ui3), std::move(texture3), std::move(CollisionComp2d{}));
@@ -390,6 +407,7 @@ int main(int argc, char** argv)
 		registry.AddComponents(eLifeBar14, std::move(LifeBar14), std::move(LifeBarComp14), std::move(LifeBarTexture14), std::move(CollisionComp2d{}));
 		registry.AddComponents(eLifeBar15, std::move(LifeBar15), std::move(LifeBarComp15), std::move(LifeBarTexture15), std::move(CollisionComp2d{}));
 		registry.AddComponents(eLifeBar16, std::move(LifeBar16), std::move(LifeBarComp16), std::move(LifeBarTexture16), std::move(CollisionComp2d{}));
+		registry.AddComponents(eGameOver, std::move(GameOverScreen), std::move(GameOverComp), std::move(GameOverTexture), std::move(CollisionComp2d{}));
 
 		// fairy icon overlays
 		for (int ov = 0; ov < 4; ++ov)
@@ -555,6 +573,7 @@ int main(int argc, char** argv)
 
 	Texture* greenFairyIconTex = &TextureLoader::Load("Textures/greenfairyblood_icon.png", window->App());
 	Texture* purpleFairyIconTex = &TextureLoader::Load("Textures/purplefairyblood_icon.png", window->App());
+	bool printEndScreen = false;
 	
 	while (!window->ShouldClose())
 	{
@@ -565,14 +584,16 @@ int main(int argc, char** argv)
 		window->Update();
 		oxygenGestion.update(dt);
 		if (oxygenGestion.getLifetime() <= 0)
-			break;
+			printEndScreen = true;
 		for (auto& uiComp : ui) {
 			auto& oui = registry.GetComponent<UiComponent>(uiComp);
-
-			if (registry.GetComponent<UiComponent>(uiComp).GetStatePrint() != true)
+			if (registry.GetComponent<UiComponent>(uiComp).GetStatePrint() != true) {
 				oxygenGestion.getActiveUiComponent(oui);
+				if (printEndScreen)
+					oxygenGestion.ActiveEndScreen(oui);
+			}
 		}
-		{
+		if (!printEndScreen) {
 			auto input = window->GetInputManager();
 
 			glm::vec2 mouseDelta = input->GetMouseDelta();
@@ -692,8 +713,6 @@ int main(int argc, char** argv)
 			// E : deposit selected creature into nearest cauldron
 			if (input->IsKeyPressed(KGR::Key::E))
 			{
-				std::cout << "[CAULDRON] Trying to deposit from slot " << inv.selectedSlot + 1
-						  << (inv.IsSlotEmpty(inv.selectedSlot) ? " (EMPTY)" : " (has creature)") << std::endl;
 				bool deposited = CauldronSystem::DepositCreature(registry, cameraEntity, inv.selectedSlot);
 				if (deposited)
 					std::cout << "[CAULDRON] >> Creature deposited! Infusion started." << std::endl;
@@ -704,7 +723,6 @@ int main(int argc, char** argv)
 			// F : collect finished loot from nearest cauldron
 			if (input->IsKeyPressed(KGR::Key::F))
 			{
-				// debug: show distance to every cauldron
 				size_t slotsBefore = 0;
 				{
 					glm::vec3 pPos = registry.GetComponent<TransformComponent>(cameraEntity).GetPosition();
@@ -713,30 +731,30 @@ int main(int argc, char** argv)
 					{
 						auto& ct = registry.GetComponent<TransformComponent>(ce);
 						auto& cc = registry.GetComponent<CauldronComponent>(ce);
-						slotsBefore += cc.slots.size();
-						float d = glm::length(ct.GetPosition() - pPos);
-						std::cout << "[CAULDRON] Distance: " << d << " (range=" << cc.interactionRange << ", finished=" << cc.FinishedCount() << ")" << std::endl;
-					}
-				}
-				int collected = CauldronSystem::CollectLoot(registry, cameraEntity);
-				size_t slotsAfter = 0;
-				{
-					auto cds = registry.GetAllComponentsView<CauldronComponent>();
-					for (auto& ce : cds)
-						slotsAfter += registry.GetComponent<CauldronComponent>(ce).slots.size();
-				}
-				if (collected > 0)
-				{
-					std::cout << "[CAULDRON] >> Collected " << collected << " loot(s)!" << std::endl;
-					auto& lootInv = registry.GetComponent<LootInventoryComponent>(cameraEntity);
-					for (auto& item : lootInv.items)
-						std::cout << "  - " << item.name << " x" << item.quantity << std::endl;
-				}
-				else if (slotsBefore > slotsAfter)
-					std::cout << "[CAULDRON] >> Infusion processed but loot roll FAILED (bad luck! creature lost)" << std::endl;
-				else
-					std::cout << "[CAULDRON] >> No loot ready (not near cauldron, or infusion not finished)" << std::endl;
-			}
+								slotsBefore += cc.slots.size();
+									float d = glm::length(ct.GetPosition() - pPos);
+									std::cout << "[CAULDRON] Distance: " << d << " (range=" << cc.interactionRange << ", finished=" << cc.FinishedCount() << ")" << std::endl;
+							}
+							}
+							int collected = CauldronSystem::CollectLoot(registry, cameraEntity);
+							size_t slotsAfter = 0;
+							{
+								auto cds = registry.GetAllComponentsView<CauldronComponent>();
+								for (auto& ce : cds)
+									slotsAfter += registry.GetComponent<CauldronComponent>(ce).slots.size();
+							}
+							if (collected > 0)
+							{
+								std::cout << "[CAULDRON] >> Collected " << collected << " loot(s)!" << std::endl;
+								auto& lootInv = registry.GetComponent<LootInventoryComponent>(cameraEntity);
+								for (auto& item : lootInv.items)
+									std::cout << "  - " << item.name << " x" << item.quantity << std::endl;
+							}
+							else if (slotsBefore > slotsAfter)
+								std::cout << "[CAULDRON] >> Infusion processed but loot roll FAILED (bad luck! creature lost)" << std::endl;
+							else
+								std::cout << "[CAULDRON] >> No loot ready (not near cauldron, or infusion not finished)" << std::endl;
+						}
 
 			// V : unlock capture boost (requires 1 "Rare Fairy Wings")
 			if (input->IsKeyPressed(KGR::Key::V))
@@ -834,7 +852,7 @@ int main(int argc, char** argv)
 					{
 						std::cout << "[CAPTURE] >> Creature captured! Inventory:";
 						for (int s = 0; s < 4; ++s)
-							std::cout << " [" << s+1 << "]=" << (inv.IsSlotEmpty(s) ? "vide" : "plein");
+							std::cout << " [" << s + 1 << "]=" << (inv.IsSlotEmpty(s) ? "vide" : "plein");
 						std::cout << std::endl;
 					}
 					else
@@ -857,7 +875,6 @@ int main(int argc, char** argv)
 					CreatureData releasedData = removed->data;
 					glm::vec3 releasePos = registry.GetComponent<TransformComponent>(cameraEntity).GetPosition() + cameraFront * 2.0f;
 
-					// Pick the correct model based on creature type
 					std::string relModelPath = "Models/greenfairy.obj";
 					const std::vector<ObjSubMeshMaterial>* relMatInfos = &greenFairyMatInfos;
 					if (releasedData.type == CreatureType::RareFairy)
@@ -890,7 +907,6 @@ int main(int argc, char** argv)
 		}
 
 		{
-
 			auto mousePos = window.get()->GetInputManager()->GetMousePosition();
 			float aspectRatio = static_cast<float>(window->GetSize().x) / static_cast<float>(window->GetSize().y);
 			auto mouseinAR = UiComponent::VrToNdc(mousePos, window->GetSize(), aspectRatio, false);
@@ -904,9 +920,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-		
-
-	
 		{
 			auto es = registry.GetAllComponentsView<CameraComponent, TransformComponent>();
 			if (es.size() != 1)
@@ -919,7 +932,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-
 		{
 			auto es = registry.GetAllComponentsView<MeshComponent, TransformComponent, MaterialComponent>();
 			for (auto& e : es)
@@ -929,7 +941,6 @@ int main(int argc, char** argv)
 					registry.GetComponent<TransformComponent>(e),
 					registry.GetComponent<MaterialComponent>(e));
 			}
-
 		}
 
 		AISystem::Update(registry, dt);
@@ -962,62 +973,62 @@ int main(int argc, char** argv)
 			}
 		}
 
-// creature respawn
-{
-	auto creatures = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
-	size_t creatureCount = creatures.size();
-	if (creatureCount < maxCreaturesInWorld)
-	{
-		respawnTimer += dt;
-		if (respawnTimer >= respawnInterval)
+		// creature respawn
 		{
-			respawnTimer = 0.0f;
-
-			CreatureData newData;
-			int typeRoll = std::rand() % 2;
-			switch (typeRoll)
+			auto creatures = registry.GetAllComponentsView<CreatureAIComponent, TransformComponent>();
+			size_t creatureCount = creatures.size();
+			if (creatureCount < maxCreaturesInWorld)
 			{
-			case 0: newData = CreatureData::MakeFairy();     break;
-			case 1: newData = CreatureData::MakeRareFairy(); break;
-			}
+				respawnTimer += dt;
+				if (respawnTimer >= respawnInterval)
+				{
+					respawnTimer = 0.0f;
 
-			std::string spModelPath = "Models/greenfairy.obj";
-			const std::vector<ObjSubMeshMaterial>* spMatInfos = &greenFairyMatInfos;
-			if (newData.type == CreatureType::RareFairy)
+					CreatureData newData;
+					int typeRoll = std::rand() % 2;
+					switch (typeRoll)
+					{
+					case 0: newData = CreatureData::MakeFairy();     break;
+					case 1: newData = CreatureData::MakeRareFairy(); break;
+					}
+
+					std::string spModelPath = "Models/greenfairy.obj";
+					const std::vector<ObjSubMeshMaterial>* spMatInfos = &greenFairyMatInfos;
+					if (newData.type == CreatureType::RareFairy)
+					{
+						spModelPath = "Models/purplefairy.obj";
+						spMatInfos = &purpleFairyMatInfos;
+					}
+
+					glm::vec3 spawnPos = spawnPoints[std::rand() % spawnPoints.size()];
+
+					MeshComponent mesh;
+					mesh.mesh = &MeshLoader::Load(spModelPath, window->App());
+
+					MaterialComponent mat = makeCreatureMat(spModelPath, *spMatInfos);
+
+					TransformComponent transform;
+					transform.SetPosition(spawnPos);
+					transform.SetScale({ 1.0f, 1.0f, 1.0f });
+
+					CreatureAIComponent ai;
+					ai.data = newData;
+					ai.data.moveSpeed = 0.0f;
+
+					auto spawned = registry.CreateEntity();
+					registry.AddComponents(spawned, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
+
+					auto& spAi = registry.GetComponent<CreatureAIComponent>(spawned);
+					auto& spTr = registry.GetComponent<TransformComponent>(spawned);
+					auto* playerTr = &registry.GetComponent<TransformComponent>(cameraEntity);
+					spAi.Init(&spTr, playerTr, {});
+				}
+			}
+			else
 			{
-				spModelPath = "Models/purplefairy.obj";
-				spMatInfos = &purpleFairyMatInfos;
+				respawnTimer = 0.0f;
 			}
-
-			glm::vec3 spawnPos = spawnPoints[std::rand() % spawnPoints.size()];
-
-			MeshComponent mesh;
-			mesh.mesh = &MeshLoader::Load(spModelPath, window->App());
-
-			MaterialComponent mat = makeCreatureMat(spModelPath, *spMatInfos);
-
-			TransformComponent transform;
-			transform.SetPosition(spawnPos);
-			transform.SetScale({ 1.0f, 1.0f, 1.0f });
-
-			CreatureAIComponent ai;
-			ai.data = newData;
-			ai.data.moveSpeed = 0.0f;
-
-			auto spawned = registry.CreateEntity();
-			registry.AddComponents(spawned, std::move(mesh), std::move(mat), std::move(transform), std::move(ai));
-
-			auto& spAi = registry.GetComponent<CreatureAIComponent>(spawned);
-			auto& spTr = registry.GetComponent<TransformComponent>(spawned);
-			auto* playerTr = &registry.GetComponent<TransformComponent>(cameraEntity);
-			spAi.Init(&spTr, playerTr, {});
 		}
-	}
-	else
-	{
-		respawnTimer = 0.0f;
-	}
-}
 
 		// debug: print cauldron infusion progress once per second
 		{
@@ -1030,23 +1041,21 @@ int main(int argc, char** argv)
 				for (auto& ce : cauldrons)
 				{
 					auto& c = registry.GetComponent<CauldronComponent>(ce);
-					for (size_t i = 0; i < c.slots.size(); ++i)
-					{
-						auto& slot = c.slots[i];
-						if (!slot.finished)
-							std::cout << "[CAULDRON] Infusing " << slot.data.lootName << " : " << static_cast<int>(slot.elapsed) << "s / " << static_cast<int>(slot.data.infusionTime) << "s" << std::endl;
-						else
-							std::cout << "[CAULDRON] " << slot.data.lootName << " READY! Press F near cauldron to collect." << std::endl;
+							for (size_t i = 0; i < c.slots.size(); ++i)
+								{
+									auto& slot = c.slots[i];
+									if (!slot.finished)
+										std::cout << "[CAULDRON] Infusing " << slot.data.lootName << " : " << static_cast<int>(slot.elapsed) << "s / " << static_cast<int>(slot.data.infusionTime) << "s" << std::endl;
+									else
+										std::cout << "[CAULDRON] " << slot.data.lootName << " READY! Press F near cauldron to collect." << std::endl;
+								}
+							}
+						}
 					}
-				}
-			}
-		}
 
-		//Test Sound
-		if(window->GetInputManager()->IsKeyPressed(KGR::Key::P))
+					//Test Sound
+		if (window->GetInputManager()->IsKeyPressed(KGR::Key::P))
 			sound.Play();
-
-		
 
 		{
 			auto es = registry.GetAllComponentsView<LightComponent<LightData::Type::Point>, TransformComponent>();
@@ -1064,14 +1073,14 @@ int main(int argc, char** argv)
 				window->RegisterLight(registry.GetComponent<LightComponent<LightData::Type::Directional>>(e), registry.GetComponent<TransformComponent>(e));
 		}
 		{
-			auto es = registry.GetAllComponentsView < TextureComponent, TransformComponent2d,UiComponent > ();
+			auto es = registry.GetAllComponentsView < TextureComponent, TransformComponent2d, UiComponent >();
 			for (auto& e : es)
-				{
-					auto transform = registry.GetComponent<TransformComponent2d>(e);
-					auto ui = registry.GetComponent<UiComponent>(e);
-					auto texture = registry.GetComponent<TextureComponent>(e);
-					window->RegisterUi(ui,transform,texture);
-				}
+			{
+				auto transform = registry.GetComponent<TransformComponent2d>(e);
+				auto ui = registry.GetComponent<UiComponent>(e);
+				auto texture = registry.GetComponent<TextureComponent>(e);
+				window->RegisterUi(ui, transform, texture);
+			}
 		}
 		window->Render({ 0.53f, 0.81f, 0.92f, 1.0f });
 	}
