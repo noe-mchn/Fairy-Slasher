@@ -100,7 +100,7 @@ ConstantBuffer<Sampler2D> emissiveSampler;
 [[vk::binding(0, 5)]]
 ConstantBuffer<Sampler2D> normalSampler;
 
-
+static const float3 fogColor = pow(float3(0.53f, 0.81f, 0.92f), 2.2f);
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET {
@@ -245,6 +245,12 @@ float4 fragMain(VSOutput vertIn) : SV_TARGET {
         }
     }
     result += emessive * 3.0f;
+
+    float distanceToCamera = length(vertIn.worldspacePosition - vertIn.eyePos);
+    float fogFactor = smoothstep(5.0f, 20.0f, distanceToCamera);
+    result = lerp(result, fogColor, fogFactor);
+
+    result = pow(result, 1.0f/2.2f);
 
     return float4(result,1.0f);
 }

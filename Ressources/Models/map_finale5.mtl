@@ -1,0 +1,212 @@
+# Blender 5.1.0 MTL File: 'map_finale.blend'
+# www.blender.org
+
+newmtl Material
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/foret.png
+map_d C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/foret.png
+
+newmtl cailloux
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/cailloux.png
+
+newmtl cheveux
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/dryad/cheveux.png
+
+newmtl corps
+Ns 20.162296
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/dryad/corps.png
+
+newmtl grosarbre
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/grosarbre.png
+
+newmtl herbe
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/herbe.png
+
+newmtl lamp
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/lamp.png
+
+newmtl lamp_emissive
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 6.300000 2.466908 4.936290
+Ni 1.500000
+d 1.000000
+illum 2
+
+newmtl medium_tree_bark
+Ns 54.717693
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/troncgrand.png
+
+newmtl mousse
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/mousse.png
+
+newmtl mursombre
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/mursombre.png
+
+newmtl skin
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.451142 0.348127 0.277148
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+
+newmtl transformateur
+Ns 36.803703
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/transformateur.png
+
+newmtl trimsheet_enviro
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/trimsheet_enviro.png
+map_d C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/trimsheet_enviro.png
+
+newmtl troncbord
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/troncbord.png
+
+newmtl troncgeant
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/troncgeant.png
+
+newmtl troncgrand
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/textures/troncgrand.png
+
+newmtl troncmoyen
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/textures/troncmoyen.png
+
+newmtl troncpetit
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/troncpetit.png
+
+newmtl troncpetit.002
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/Downloads/troncpetit.png
+
+newmtl visage
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/yllan/OneDrive/Desktop/Yllan/Gaming Campus/2025-2026/projet jeu libre/SlimeRancher3-main/texture/dryad/visage.png

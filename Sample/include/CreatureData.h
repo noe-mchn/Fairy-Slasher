@@ -63,6 +63,20 @@ struct CreatureData
         return dataSoulR;
     }
 
+    static CreatureData MakeDryadSoul()
+    {
+        CreatureData data;
+        data.type = CreatureType::Souls;
+        data.respirationTime = 5.0f;
+        data.infusionTime = 10.0f;
+        data.lootName = "Dryad Souls";
+        data.lootChance = 80;
+        data.moveSpeed = 0.0f;
+        data.detectionRange = 0.0f;
+        data.flees = false;
+        return data;
+    }
+
     static CreatureData MakeRareFairy()
     {
         CreatureData dataFairyR;

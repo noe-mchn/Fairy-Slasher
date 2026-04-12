@@ -8,25 +8,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-/**
- * @brief System that handles capturing creatures.
- *
- * When the player is close enough to a creature and holds the capture
- * action long enough, the creature's data is moved into the player's
- * InventoryComponent and the creature entity is destroyed.
- */
 struct CaptureSystem
 {
-    /**
-     * @brief Finds the nearest creature within capture range.
-     *
-     * @tparam RegistryType  Concrete ECS registry type.
-     * @param registry       The registry that owns all entities.
-     * @param playerEntity   Entity that carries the InventoryComponent.
-     * @param captureRange   Maximum distance (XZ) for a capture to succeed.
-     * @param outEntity      Receives the closest creature entity if found.
-     * @return true if a creature is in range.
-     */
     template<typename RegistryType>
     static bool FindNearest(RegistryType& registry,
                             typename RegistryType::type playerEntity,
@@ -60,18 +43,6 @@ struct CaptureSystem
         return found;
     }
 
-    /**
-     * @brief Immediately captures the given creature entity.
-     *
-     * Moves the creature's data into the player's inventory and
-     * destroys the creature entity.
-     *
-     * @tparam RegistryType  Concrete ECS registry type.
-     * @param registry       The registry that owns all entities.
-     * @param playerEntity   Entity that carries the InventoryComponent.
-     * @param creatureEntity The creature to capture.
-     * @return true if the creature was captured.
-     */
     template<typename RegistryType>
     static bool Capture(RegistryType& registry,
                         typename RegistryType::type playerEntity,

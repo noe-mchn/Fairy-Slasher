@@ -4,20 +4,19 @@
 #include "Core/UiComponent.h"
 OxygenGestion::OxygenGestion()
 {
-	lifetime = 5000000.0f;
+	lifetime = 50000;
 }
 
 void OxygenGestion::resetOxygen() {
-	lifetime = 5000000.0f;
+	lifetime = 50000;
 }
 
 void OxygenGestion::update(float dt) 
 {
-    static int maxLifetime = 5000000;
+    static int maxLifetime = 50000;
     static auto frameTime = (maxLifetime / 17);
 	index = lifetime / frameTime;
 	lifetime -= 1.0f * dt;
-	printf(" oxygen :%d\n", index);
 }
 
 int OxygenGestion::getIndex()

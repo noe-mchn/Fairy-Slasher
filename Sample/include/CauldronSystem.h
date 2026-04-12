@@ -10,14 +10,6 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 
-/**
- * @brief System that drives the cauldron infusion loop.
- *
- * Each frame:
- *   1. Tick infusion timers on every cauldron.
- *   2. Optionally, let the player deposit a creature (DepositCreature).
- *   3. Optionally, let the player collect finished loot (CollectLoot).
- */
 struct CauldronSystem
 {
     // -----------------------------------------------------------------
@@ -49,13 +41,6 @@ struct CauldronSystem
     // Deposit — move a captured creature from inventory into cauldron
     // -----------------------------------------------------------------
 
-    /**
-     * @brief Deposits the creature from the given inventory slot
-     *        into the nearest cauldron with a free slot.
-     *
-     * @param slotIndex  The inventory slot to deposit from.
-     * @return true if a creature was deposited.
-     */
     template<typename RegistryType>
     static bool DepositCreature(RegistryType& registry,
                                 typename RegistryType::type playerEntity,
@@ -112,15 +97,6 @@ struct CauldronSystem
     // Collect — harvest finished loot from the nearest cauldron
     // -----------------------------------------------------------------
 
-    /**
-     * @brief Collects all finished loot from the nearest cauldron and
-     *        stores it in the player's LootInventoryComponent.
-     *
-     * Loot is generated using the creature's @c lootChance: a random
-     * roll decides whether the loot is obtained.
-     *
-     * @return The number of loot items successfully collected.
-     */
     template<typename RegistryType>
     static int CollectLoot(RegistryType& registry,
                            typename RegistryType::type playerEntity)

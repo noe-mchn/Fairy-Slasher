@@ -4,6 +4,9 @@
 #include <filesystem>
 #include <iostream>
 #include <tiny_obj_loader.h>
+#include <array>
+#include <algorithm>
+#include <glm/vec3.hpp>
 
 struct ObjSubMeshMaterial {
 	std::string diffuseTexturePath; // relative to resources root, empty if none
@@ -50,6 +53,48 @@ inline std::string ResolveTexturePath(
 	return "";
 }
 
+inline std::vector<std::pair<std::string, std::array<float, 3>>> GetShapePositions(
+	const std::string& objRelativePath,
+	const std::filesystem::path& resourcesRoot,
+	const std::string& nameFilter)
+{
+	std::filesystem::path objAbsPath = resourcesRoot / objRelativePath;
+	std::string mtlBaseDir = objAbsPath.parent_path().string();
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	bool ok = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+		objAbsPath.string().c_str(), mtlBaseDir.c_str(), true);
+	if (!ok)
+		return {};
+
+	std::vector<std::pair<std::string, std::array<float, 3>>> result;
+	for (const auto& shape : shapes)
+	{
+		if (shape.name.find(nameFilter) == std::string::npos)
+			continue;
+
+		float minX = 1e30f, minY = 1e30f, minZ = 1e30f;
+		float maxX = -1e30f, maxY = -1e30f, maxZ = -1e30f;
+
+		for (const auto& idx : shape.mesh.indices)
+		{
+			float x = attrib.vertices[3 * idx.vertex_index + 0];
+			float y = attrib.vertices[3 * idx.vertex_index + 1];
+			float z = attrib.vertices[3 * idx.vertex_index + 2];
+			if (x < minX) minX = x; if (x > maxX) maxX = x;
+			if (y < minY) minY = y; if (y > maxY) maxY = y;
+			if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+		}
+
+		result.push_back({ shape.name, { (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2 } });
+	}
+	return result;
+}
+
 // Parses an .obj and its associated .mtl to extract per-shape (= per sub-mesh) texture info.
 // objRelativePath: e.g. "Models/Map.obj" (relative to resources root, same as MeshLoader::Load)
 // resourcesRoot: absolute path to the Ressources folder
@@ -69,15 +114,10 @@ inline std::vector<ObjSubMeshMaterial> GetObjMaterials(
 	bool ok = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
 		objAbsPath.string().c_str(), mtlBaseDir.c_str(), true);
 
-	if (!warn.empty())
-		std::cout << "[OBJ MTL] Warning: " << warn << std::endl;
 	if (!err.empty())
 		std::cerr << "[OBJ MTL] Error: " << err << std::endl;
 	if (!ok)
 		throw std::runtime_error("Failed to parse .obj materials: " + warn + err);
-
-	std::cout << "[OBJ MTL] " << objRelativePath << " : "
-		<< shapes.size() << " shapes, " << materials.size() << " materials" << std::endl;
 
 	std::vector<ObjSubMeshMaterial> result;
 	result.reserve(shapes.size());
@@ -98,26 +138,101 @@ inline std::vector<ObjSubMeshMaterial> GetObjMaterials(
 				{
 					info.diffuseTexturePath = ResolveTexturePath(
 						mat.diffuse_texname, mtlBaseDir, resourcesRoot);
-
-					if (info.diffuseTexturePath.empty())
-						std::cerr << "  [WARN] shape [" << shape.name
-							<< "] texture \"" << mat.diffuse_texname
-							<< "\" NOT FOUND anywhere!" << std::endl;
 				}
 
-				std::cout << "  shape [" << shape.name << "] -> material \""
-					<< mat.name << "\" -> texture \""
-					<< (info.diffuseTexturePath.empty() ? "(none)" : info.diffuseTexturePath)
-					<< "\"" << std::endl;
-			}
-		}
-		else
-		{
-			std::cout << "  shape [" << shape.name << "] -> no material assigned" << std::endl;
-		}
+					}
+				}
+				else
+				{
+				}
 
 		result.push_back(info);
 	}
 
+	return result;
+}
+
+// Returns the bounding-box center of an entire OBJ model (all shapes combined).
+// Useful to compute the offset between bounding-box center and local origin.
+inline glm::vec3 GetModelBBoxCenter(
+	const std::string& objRelativePath,
+	const std::filesystem::path& resourcesRoot)
+{
+	std::filesystem::path objAbsPath = resourcesRoot / objRelativePath;
+	std::string mtlBaseDir = objAbsPath.parent_path().string();
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+		objAbsPath.string().c_str(), mtlBaseDir.c_str(), true))
+		return glm::vec3(0);
+
+	glm::vec3 minP(1e30f, 1e30f, 1e30f), maxP(-1e30f, -1e30f, -1e30f);
+	for (size_t i = 0; i + 2 < attrib.vertices.size(); i += 3)
+	{
+		float x = attrib.vertices[i], y = attrib.vertices[i + 1], z = attrib.vertices[i + 2];
+		if (x < minP.x) minP.x = x; if (x > maxP.x) maxP.x = x;
+		if (y < minP.y) minP.y = y; if (y > maxP.y) maxP.y = y;
+		if (z < minP.z) minP.z = z; if (z > maxP.z) maxP.z = z;
+	}
+	return (minP + maxP) * 0.5f;
+}
+
+struct ShapeAABB {
+	std::string name;
+	glm::vec3 min;
+	glm::vec3 max;
+};
+
+inline std::vector<ShapeAABB> GetShapeAABBs(
+	const std::string& objRelativePath,
+	const std::filesystem::path& resourcesRoot,
+	const std::vector<std::string>& nameFilters,
+	const std::vector<std::string>& excludeFilters = {})
+{
+	std::filesystem::path objAbsPath = resourcesRoot / objRelativePath;
+	std::string mtlBaseDir = objAbsPath.parent_path().string();
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	bool ok = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+		objAbsPath.string().c_str(), mtlBaseDir.c_str(), true);
+	if (!ok)
+		return {};
+
+	std::vector<ShapeAABB> result;
+	for (const auto& shape : shapes)
+	{
+		bool excluded = false;
+		for (const auto& excl : excludeFilters)
+			if (shape.name.find(excl) != std::string::npos) { excluded = true; break; }
+		if (excluded) continue;
+
+		bool matched = nameFilters.empty();
+		for (const auto& filter : nameFilters)
+			if (shape.name.find(filter) != std::string::npos) { matched = true; break; }
+		if (!matched) continue;
+
+		float minX = 1e30f, minY = 1e30f, minZ = 1e30f;
+		float maxX = -1e30f, maxY = -1e30f, maxZ = -1e30f;
+
+		for (const auto& idx : shape.mesh.indices)
+		{
+			float x = attrib.vertices[3 * idx.vertex_index + 0];
+			float y = attrib.vertices[3 * idx.vertex_index + 1];
+			float z = attrib.vertices[3 * idx.vertex_index + 2];
+			if (x < minX) minX = x; if (x > maxX) maxX = x;
+			if (y < minY) minY = y; if (y > maxY) maxY = y;
+			if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+		}
+
+		result.push_back({ shape.name, glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ) });
+	}
 	return result;
 }

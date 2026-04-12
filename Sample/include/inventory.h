@@ -11,6 +11,4 @@ class Inventory {
 public:
 	Inventory() = default;
 	~Inventory() = default;
-	//void inventoryGestion(KGR::InputManager* input, std::vector<uint64_t> ui, ecsType registry);
-	//UiComponent& getIdUi(std::vector<uint64_t> es, int id, ecsType registry);
 };

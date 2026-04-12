@@ -1,4 +1,4 @@
-#include "NavMesh.h"
+﻿#include "NavMesh.h"
 
 #include <algorithm>
 #include <cmath>
@@ -47,22 +47,13 @@ void NavMesh::BuildFromMesh(const std::vector<glm::vec3>& vertices, const std::v
 
 // ---- adjacency detection ----------------------------------------------------
 
-/// @brief Small epsilon used for floating-point vertex comparisons.
 static constexpr float kEpsilon = 1e-5f;
 
-/**
- * @brief Checks whether two 3D points are the same within a tolerance.
- */
 static bool VecEqual(const glm::vec3& a, const glm::vec3& b)
 {
     return glm::length(a - b) < kEpsilon;
 }
 
-/**
- * @brief Returns the number of vertices shared by two triangles.
- *
- * If exactly two vertices are shared the triangles share an edge.
- */
 static int SharedVertexCount(const NavMeshTriangle& a, const NavMeshTriangle& b)
 {
     int count = 0;
@@ -77,17 +68,6 @@ static int SharedVertexCount(const NavMeshTriangle& a, const NavMeshTriangle& b)
     return count;
 }
 
-/**
- * @brief For two neighbor triangles, returns the edge index in triA
- *        whose two endpoints are shared with triB.
- *
- * Edge convention:
- *   edge 0 = vertices[0]→vertices[1]
- *   edge 1 = vertices[1]→vertices[2]
- *   edge 2 = vertices[2]→vertices[0]
- *
- * @return Edge index (0–2), or -1 if no shared edge is found.
- */
 static int FindSharedEdge(const NavMeshTriangle& triA, const NavMeshTriangle& triB)
 {
     // For each edge of triA check if both endpoints exist in triB.
@@ -392,16 +372,12 @@ glm::vec3 NavMesh::ConstrainToBounds(const glm::vec3& point,
 // NavMesh — pathfinding (A* + funnel)
 // =============================================================================
 
-/**
- * @brief Internal A* node used during the graph search.
- */
 struct AStarNode
 {
-    int32_t triangle = -1;  ///< Triangle index in the mesh.
-    float gCost = 0.f; ///< Accumulated cost from start.
-    float fCost = 0.f; ///< gCost + heuristic.
+    int32_t triangle = -1;
+    float gCost = 0.f;
+    float fCost = 0.f;
 
-    /// @brief Comparison for the priority queue (lowest fCost first).
     bool operator>(const AStarNode& other) const 
     { 
         return fCost > other.fCost;
